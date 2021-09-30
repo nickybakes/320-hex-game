@@ -1,7 +1,8 @@
 "use strict";
 const app = new PIXI.Application({
     width: 1024,
-    height: 576
+    height: 576,
+    antialias: true
 });
 document.body.appendChild(app.view);
 
@@ -29,10 +30,11 @@ const prefix = "nmb9745-";
 const carColorKey = prefix + "carColor";
 
 //variables needed to run the game
-let hexRadius = 40;
-let hexArray;
+let hexRadius = 50;
+let hexArray = [];
 let hexGridHeight = 6;
 let hexGridWidth = 6 * 2;
+let hexPath = [];
 
 let hexGridDisplayX = 100;
 let hexGridDisplayY = 100;
@@ -40,6 +42,7 @@ let hexGridDisplayY = 100;
 
 //objects that store the states of user's input/controls
 let mousePosition;
+let mouseHeldDown;
 let keysHeld = [];
 let keysReleased = [];
 
@@ -59,13 +62,18 @@ function setUpGame() {
         //on even row
         if(y % 2 == 0){
             for (let x = 0; x < hexGridWidth; x+= 2) {
-                app.stage.addChild(new Hexagon(hexGridDisplayX + x * (hexRadius * 1), hexGridDisplayY + y * (hexRadius * 1.6), x, y, hexRadius, Math.trunc(Math.random() * 6), null, null));
+                let hex = new Hexagon(hexGridDisplayX + x * (hexRadius * 1), hexGridDisplayY + y * (hexRadius * 1.6), x, y, hexRadius, Math.trunc(Math.random() * 6), null, null);
+                hexArray.push(hex);
+                app.stage.addChild(hex);
+
             }
         }
         //odd row
         else{
             for (let x = 1; x < hexGridWidth; x+= 2) {
-                app.stage.addChild(new Hexagon(hexGridDisplayX + x * (hexRadius * 1), hexGridDisplayY + y * (hexRadius * 1.6), x, y, hexRadius, Math.trunc(Math.random() * 6), null, null));
+                let hex = new Hexagon(hexGridDisplayX + x * (hexRadius * 1), hexGridDisplayY + y * (hexRadius * 1.6), x, y, hexRadius, Math.trunc(Math.random() * 6), null, null);
+                hexArray.push(hex);
+                app.stage.addChild(hex);
             }
         }
 

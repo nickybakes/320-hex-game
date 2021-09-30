@@ -72,3 +72,37 @@ function secondsToTimeString(seconds){
     //return the result
     return timeString;
 }
+
+function rgbToHex(red = 0, green = 0, blue = 0) {
+    let redHex = Number(Math.trunc(clamp(red, 0, 255))).toString(16);
+    if (redHex.length < 2) {
+        redHex = "0" + redHex;
+    }
+    let greenHex = Number(Math.trunc(clamp(green, 0, 255))).toString(16);
+    if (greenHex.length < 2) {
+        greenHex = "0" + greenHex;
+    }
+    let blueHex = Number(Math.trunc(clamp(blue, 0, 255))).toString(16);
+    if (blueHex.length < 2) {
+        blueHex = "0" + blueHex;
+    }
+    return "0x" + redHex + greenHex + blueHex;
+};
+
+function hexToRed(red){
+    return parseInt(red, 16);
+}
+
+function multiplyColorsConvertToHex(redA, greenA, blueA, redB, greenB, blueB){
+    let r = redA * (redB/255);
+    let g = greenA * (greenB / 255);
+    let b = blueA * (blueB / 255);
+    return rgbToHex(r, g, b);
+}
+
+function blendColorsConvertToHex(redA, greenA, blueA, redB, greenB, blueB, alphaA, alphaB) {
+    let r = redB * (redB / 255) + redA * alphaA * (1 - alphaB) / 255;
+    let g = greenB * (greenB / 255) + greenA * alphaA * (1 - alphaB) / 255;
+    let b = blueB * (blueB / 255) + blueA * alphaA * (1 - alphaB) / 255;
+    return rgbToHex(r, g, b);
+}
