@@ -9,8 +9,11 @@ class Hexagon extends PIXI.Graphics {
     //size values
     radius;
 
-    //how many stepped rotations this hex is rotated by, counter clockwise
+    //how many stepped rotations this hex is currently rotated by, counter clockwise
     rotationValue;
+
+    //how many stepped rotations this hex SHOULD be rotated by, counter clockwise
+    wantedRotationValue;
 
     //functions to call
     dragFunction;
@@ -18,6 +21,13 @@ class Hexagon extends PIXI.Graphics {
 
     //if this tile is being hovered over
     highlighted;
+
+    currentRotationVelocity;
+
+    absoluteRotationVelocity = 10;
+
+    
+
 
     colorsRGB = [{ r: 255, g: 0, b: 0 }, { r: 245, g: 139, b: 0 }, { r: 255, g: 208, b: 0 }, { r: 0, g: 145, b: 0 }, { r: 0, g: 110, b: 255 }, { r: 116, g: 0, b: 184 }];
     colorIndices;
@@ -31,6 +41,7 @@ class Hexagon extends PIXI.Graphics {
         this.posX = posX;
         this.posY = posY;
         this.rotationValue = rotationValue;
+        this.wantedRotationValue = rotationValue;
         this.interactive = true;
         this.buttonMode = true;
 
@@ -38,9 +49,67 @@ class Hexagon extends PIXI.Graphics {
         //let colors = [rgbToHex(255, 0, 0), rgbToHex(245, 139, 0), rgbToHex(255, 208, 0), rgbToHex(0, 145, 0), rgbToHex(0, 110, 255), rgbToHex(116, 0, 184)];
         this.colorIndices = [Math.trunc(Math.random() * 6), Math.trunc(Math.random() * 6), Math.trunc(Math.random() * 6)];
 
-        // for(let i = 0; i < 3; i++){
-        //     colorIndices[i] = Math.trunc(Math.random() * 6);
-        // }
+        this.drawHex();
+
+        this.on('pointerover', this.onMouseEnter);
+        this.on('pointerout', this.onMouseLeave);
+
+        // events for drag start
+        this.on('pointerdown', this.onDragStart);
+        // events for drag end
+        this.on('pointerup', this.onDragEnd);
+        // events for drag move
+        this.on('pointermove', this.onDragMove);
+
+        this.dragFunction = dragFunction;
+        this.endDragFunction = endDragFunction;
+    }
+
+    rotateCW(){
+        if(this.currentRotationVelocity == 0){
+            this.wantedRotationValue -= 1;
+            this.currentRotationVelocity = -this.absoluteRotationVelocity;
+        }
+    }
+
+    rotateCCW() {
+        if (this.currentRotationVelocity == 0) {
+            this.wantedRotationValue += 1;
+            this.currentRotationVelocity = this.absoluteRotationVelocity;
+        }
+    }
+
+    update(){
+        if(this.currentRotationVelocity > 0 && this.wantedRotationValue - this.rotationValue > 0){
+            this.rotationValue += this.currentRotationVelocity * frameTime;
+            this.clear();
+            this.drawHex();
+        }
+        else if (this.currentRotationVelocity < 0 && this.rotationValue - this.wantedRotationValue > 0) {
+            this.rotationValue += this.currentRotationVelocity * frameTime;
+            this.clear();
+            this.drawHex();
+        }
+
+        if (this.currentRotationVelocity > 0 && this.wantedRotationValue - this.rotationValue < 0) {
+            this.rotationValue = this.wantedRotationValue;
+            this.currentRotationVelocity = 0;
+            this.clear();
+            this.drawHex();
+        }
+        else if (this.currentRotationVelocity < 0 && this.rotationValue - this.wantedRotationValue < 0) {
+            this.rotationValue = this.wantedRotationValue;
+            this.currentRotationVelocity = 0;
+            this.clear();
+            this.drawHex();
+        } else if (this.currentRotationVelocity != 0 && this.rotationValue == this.wantedRotationValue){
+            this.currentRotationVelocity = 0;
+        }
+
+    }
+
+    drawHex(){
+        this.beginFill();
 
         for (let i = 0; i < 6; i++) {
             let brightness = Math.abs(moveIntoRange((i + this.rotationValue), -3, 3)) * 65 + 40;
@@ -60,20 +129,6 @@ class Hexagon extends PIXI.Graphics {
         }
 
         this.endFill();
-
-
-        this.on('pointerover', this.onMouseEnter);
-        this.on('pointerout', this.onMouseLeave);
-
-        // events for drag start
-        this.on('pointerdown', this.onDragStart);
-        // events for drag end
-        this.on('pointerup', this.onDragEnd);
-        // events for drag move
-        this.on('pointermove', this.onDragMove);
-
-        this.dragFunction = dragFunction;
-        this.endDragFunction = endDragFunction;
     }
 
     //when the user clicks on this hexagon, start dragging the handle to the mouse positon
@@ -82,16 +137,17 @@ class Hexagon extends PIXI.Graphics {
         this.highlighted = true;
         if (dragStartHex != null && mouseHeldDown) {
             let indexOfHexInPath = hexPath.indexOf(this);
-            if (indexOfHexInPath == -1){
+            if (indexOfHexInPath == -1) {
                 hexPath.push(this);
-            }else{
+            } else {
                 hexPath.length = indexOfHexInPath + 1;
             }
         }
         e.target.alpha = 1.5;
     }
 
-    onMouseLeave(e){
+    onMouseLeave(e) {
+        highlightedHex = null;
         this.highlighted = false;
         e.currentTarget.alpha = 1.0;
     }
@@ -135,22 +191,24 @@ class PathIndicator extends PIXI.Graphics {
 
     }
 
-    drawLine(){
+    drawLine() {
         this.beginFill();
+        this.lineStyle({
+            width: 11,
+            color: 0xffffff
+        });
         for (let i = 0; i < hexPath.length - 1; i++) {
-            this.lineStyle({
-                width: 11, 
-                color: 0xffffff});
             this.moveTo(hexPath[i].x, hexPath[i].y)
                 .lineTo(hexPath[i + 1].x, hexPath[i + 1].y)
         }
-        if (dragStartHex != null) {
+        if (dragStartHex != null && highlightedHex == dragStartHex) {
             this.moveTo(dragStartHex.x, dragStartHex.y);
+            this.lineTo(mousePosition.x, mousePosition.y);
         }
-        if(highlightedHex != null){
+        if (dragStartHex != null && highlightedHex != null) {
             this.moveTo(highlightedHex.x, highlightedHex.y);
+            this.lineTo(mousePosition.x, mousePosition.y);
         }
-        this.lineTo(mousePosition.x, mousePosition.y);
         this.endFill();
     }
 }

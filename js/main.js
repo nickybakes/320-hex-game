@@ -10,6 +10,9 @@ document.body.appendChild(app.view);
 const sceneWidth = app.view.width;
 const sceneHeight = app.view.height;
 
+//time taken to calculate/render this frame
+let frameTime;
+
 //the stage we are rendering everything to
 let stage;
 
@@ -42,6 +45,8 @@ let pathIndicator;
 
 let hexGridDisplayX = 100;
 let hexGridDisplayY = 100;
+
+let rotationCoolDown;
 
 
 //objects that store the states of user's input/controls
@@ -146,12 +151,27 @@ function updateLoop() {
     // #1 - Calculate "delta time"
     let dt = 1 / app.ticker.FPS;
     if (dt > 1 / 12) dt = 1 / 12;
+    frameTime = dt;
 
     //get our mouse position
     mousePosition = app.renderer.plugins.interaction.mouse.global;
 
     pathIndicator.clear();
     pathIndicator.drawLine();
+
+    //check for E press to rotate hex CW
+    if (highlightedHex != null && keysHeld["69"]) {
+        highlightedHex.rotateCW();
+    }
+
+    //check for Q press to rotate hex CCW
+    if (highlightedHex != null && keysHeld["81"]) {
+        highlightedHex.rotateCCW();
+    }
+
+    for (let i = 0; i < hexArray.length; i++) {
+        hexArray[i].update();
+    }
 
     //reset our controls for next frame
     keysReleased = [];
