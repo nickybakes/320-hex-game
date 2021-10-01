@@ -19,6 +19,9 @@ class Hexagon extends PIXI.Graphics {
     //if this tile is being hovered over
     highlighted;
 
+    colorsRGB = [{ r: 255, g: 0, b: 0 }, { r: 245, g: 139, b: 0 }, { r: 255, g: 208, b: 0 }, { r: 0, g: 145, b: 0 }, { r: 0, g: 110, b: 255 }, { r: 116, g: 0, b: 184 }];
+    colorIndices;
+
     //inits this hexagon and stores its values
     constructor(screenX = 0, screenY = 0, posX = 0, posY = 0, radius, rotationValue, dragFunction, endDragFunction = dragFunction) {
         super();
@@ -31,34 +34,36 @@ class Hexagon extends PIXI.Graphics {
         this.interactive = true;
         this.buttonMode = true;
 
-        let colorsRGB = [{ r: 255, g: 0, b: 0 }, { r: 245, g: 139, b: 0 }, { r: 255, g: 208, b: 0 }, { r: 0, g: 145, b: 0 }, { r: 0, g: 110, b: 255}, { r: 116, g: 0, b: 184}];
-        let colors = [rgbToHex(255, 0, 0), rgbToHex(245, 139, 0), rgbToHex(255, 208, 0), rgbToHex(0, 145, 0), rgbToHex(0, 110, 255), rgbToHex(116, 0, 184)];
-        let colorIndices = [Math.trunc(Math.random() * 6), Math.trunc(Math.random() * 6), Math.trunc(Math.random() * 6)];
+        this.colorsRGB;
+        //let colors = [rgbToHex(255, 0, 0), rgbToHex(245, 139, 0), rgbToHex(255, 208, 0), rgbToHex(0, 145, 0), rgbToHex(0, 110, 255), rgbToHex(116, 0, 184)];
+        this.colorIndices = [Math.trunc(Math.random() * 6), Math.trunc(Math.random() * 6), Math.trunc(Math.random() * 6)];
 
         // for(let i = 0; i < 3; i++){
         //     colorIndices[i] = Math.trunc(Math.random() * 6);
         // }
 
-        for(let i = 0; i < 6; i++){
-            let brightness = Math.abs(moveIntoRange((i + rotationValue), -3, 3)) * 65 + 40;
-            let color = colorsRGB[colorIndices[Math.trunc(i / 2)]];
-            let bevelColor = rgbToHex(color.r + (brightness - 128) * 1.6, color.g + (brightness - 128) * 1.6, color.b + (brightness - 128) * 1.6) ;
+        for (let i = 0; i < 6; i++) {
+            let brightness = Math.abs(moveIntoRange((i + this.rotationValue), -3, 3)) * 65 + 40;
+            let color = this.colorsRGB[this.colorIndices[Math.trunc(i / 2)]];
+            let bevelColor = rgbToHex(color.r + (brightness - 128) * 1.6, color.g + (brightness - 128) * 1.6, color.b + (brightness - 128) * 1.6);
             this.lineStyle(1, bevelColor);
-            this.beginFill(colors[colorIndices[Math.trunc(i / 2)]]);
+            this.beginFill(rgbToHex(color.r + (brightness - 128) * 0, color.g + (brightness - 128) * 0, color.b + (brightness - 128) * 0));
             this.drawPolygon([
-                Math.sin(rad(60 * (i + rotationValue))) * radius, Math.cos(rad(60 * (i + rotationValue))) * radius,
-                Math.sin(rad(60 * (i + 1 + rotationValue))) * radius, Math.cos(rad(60 * (i + 1 + rotationValue))) * radius,
+                Math.sin(rad(60 * (i + this.rotationValue))) * this.radius, Math.cos(rad(60 * (i + this.rotationValue))) * this.radius,
+                Math.sin(rad(60 * (i + 1 + this.rotationValue))) * this.radius, Math.cos(rad(60 * (i + 1 + this.rotationValue))) * this.radius,
                 0, 0,
             ])
             this.endFill;
             this.lineStyle(3, bevelColor);
-            this.moveTo(Math.sin(rad(60 * (i + rotationValue))) * radius, Math.cos(rad(60 * (i + rotationValue))) * radius)
-                .lineTo(Math.sin(rad(60 * (i + 1 + rotationValue))) * radius, Math.cos(rad(60 * (i + 1 + rotationValue))) * radius);
+            this.moveTo(Math.sin(rad(60 * (i + this.rotationValue))) * this.radius, Math.cos(rad(60 * (i + this.rotationValue))) * this.radius)
+                .lineTo(Math.sin(rad(60 * (i + 1 + this.rotationValue))) * this.radius, Math.cos(rad(60 * (i + 1 + this.rotationValue))) * this.radius);
         }
 
         this.endFill();
-        this.on('pointerover', function (e) { if (mouseHeldDown) { hexPath.push(this);  } e.target.alpha = 1.5; });
-        this.on('pointerout', function (e) { e.currentTarget.alpha = 1.0; });
+
+
+        this.on('pointerover', this.onMouseEnter);
+        this.on('pointerout', this.onMouseLeave);
 
         // events for drag start
         this.on('pointerdown', this.onDragStart);
@@ -71,18 +76,41 @@ class Hexagon extends PIXI.Graphics {
         this.endDragFunction = endDragFunction;
     }
 
+    //when the user clicks on this hexagon, start dragging the handle to the mouse positon
+    onMouseEnter(e) {
+        highlightedHex = this;
+        this.highlighted = true;
+        if (dragStartHex != null && mouseHeldDown) {
+            let indexOfHexInPath = hexPath.indexOf(this);
+            if (indexOfHexInPath == -1){
+                hexPath.push(this);
+            }else{
+                hexPath.length = indexOfHexInPath + 1;
+            }
+        }
+        e.target.alpha = 1.5;
+    }
 
-    //when the user clicks on this trackbar, start dragging the handle to the mouse positon
+    onMouseLeave(e){
+        this.highlighted = false;
+        e.currentTarget.alpha = 1.0;
+    }
+
+    //when the user clicks on this hexagon, start dragging the handle to the mouse positon
     onDragStart(e) {
-        console.log("DRAG START");
-        mouseHeldDown = true;
+        if (this == highlightedHex && dragStartHex == null) {
+            console.log("DRAG START");
+            dragStartHex = this;
+            hexPath.push(this);
+            mouseHeldDown = true;
+        }
     }
 
     //when  the user stops dragging the handle
     onDragEnd(e) {
         console.log("DRAG END");
 
-
+        dragStartHex = null;
         hexPath = [];
         mouseHeldDown = false;
     }
@@ -90,5 +118,39 @@ class Hexagon extends PIXI.Graphics {
     //dragging the handle to the mouse positon
     onDragMove(e) {
         //console.log("DRAG MOVE")
+    }
+}
+
+
+
+class PathIndicator extends PIXI.Graphics {
+
+    //inits this hexagon and stores its values
+    constructor() {
+        super();
+        this.x = 0;
+        this.y = 0;
+        this.interactive = false;
+        this.buttonMode = false;
+
+    }
+
+    drawLine(){
+        this.beginFill();
+        for (let i = 0; i < hexPath.length - 1; i++) {
+            this.lineStyle({
+                width: 11, 
+                color: 0xffffff});
+            this.moveTo(hexPath[i].x, hexPath[i].y)
+                .lineTo(hexPath[i + 1].x, hexPath[i + 1].y)
+        }
+        if (dragStartHex != null) {
+            this.moveTo(dragStartHex.x, dragStartHex.y);
+        }
+        if(highlightedHex != null){
+            this.moveTo(highlightedHex.x, highlightedHex.y);
+        }
+        this.lineTo(mousePosition.x, mousePosition.y);
+        this.endFill();
     }
 }

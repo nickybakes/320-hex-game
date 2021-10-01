@@ -36,6 +36,10 @@ let hexGridHeight = 6;
 let hexGridWidth = 6 * 2;
 let hexPath = [];
 
+let highlightedHex;
+let dragStartHex;
+let pathIndicator;
+
 let hexGridDisplayX = 100;
 let hexGridDisplayY = 100;
 
@@ -56,6 +60,7 @@ function setUpGame() {
     window.addEventListener("keydown", keysDown);
     window.addEventListener("keyup", keysUp);
 
+    hexPath = [];
     //set up our scenes/containers
     stage = app.stage;
     for(let y = 0; y < hexGridHeight; y++){
@@ -65,7 +70,6 @@ function setUpGame() {
                 let hex = new Hexagon(hexGridDisplayX + x * (hexRadius * 1), hexGridDisplayY + y * (hexRadius * 1.6), x, y, hexRadius, Math.trunc(Math.random() * 6), null, null);
                 hexArray.push(hex);
                 app.stage.addChild(hex);
-
             }
         }
         //odd row
@@ -76,8 +80,10 @@ function setUpGame() {
                 app.stage.addChild(hex);
             }
         }
-
     }
+
+    pathIndicator = new PathIndicator();
+    app.stage.addChild(pathIndicator);
     
     //init our HUD containers for different game states
     gameScene = new PIXI.Container();
@@ -144,7 +150,8 @@ function updateLoop() {
     //get our mouse position
     mousePosition = app.renderer.plugins.interaction.mouse.global;
 
-
+    pathIndicator.clear();
+    pathIndicator.drawLine();
 
     //reset our controls for next frame
     keysReleased = [];
