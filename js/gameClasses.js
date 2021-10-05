@@ -3,7 +3,7 @@ class Hexagon extends PIXI.Graphics {
     posX;
     posY;
 
-    //state for whether its ebing dragged or not
+    //state for whether its being dragged or not
     dragging;
 
     //size values
@@ -26,6 +26,9 @@ class Hexagon extends PIXI.Graphics {
 
     absoluteRotationVelocity = 10;
 
+
+    //stores values of hexagon
+    hexagonValues;
     
 
 
@@ -48,14 +51,15 @@ class Hexagon extends PIXI.Graphics {
         this.colorsRGB;
         //let colors = [rgbToHex(255, 0, 0), rgbToHex(245, 139, 0), rgbToHex(255, 208, 0), rgbToHex(0, 145, 0), rgbToHex(0, 110, 255), rgbToHex(116, 0, 184)];
         this.colorIndices = [Math.trunc(Math.random() * 6), Math.trunc(Math.random() * 6), Math.trunc(Math.random() * 6)];
-
+        this.hexagonValues = [this.colorIndices[0],this.colorIndices[0],this.colorIndices[1],this.colorIndices[1],this.colorIndices[2],this.colorIndices[2]];    
+        
         this.drawHex();
 
         this.on('pointerover', this.onMouseEnter);
         this.on('pointerout', this.onMouseLeave);
 
         // events for drag start
-        this.on('pointerdown', this.onDragStart);
+        this.on('pointerdown', this.onDragStart);       
         // events for drag end
         this.on('pointerup', this.onDragEnd);
         // events for drag move
@@ -69,6 +73,8 @@ class Hexagon extends PIXI.Graphics {
         if(this.currentRotationVelocity == 0){
             this.wantedRotationValue -= 1;
             this.currentRotationVelocity = -this.absoluteRotationVelocity;
+            this.hexagonValues.push(this.hexagonValues[0]);
+            this.hexagonValues.shift(this.hexagonValues[0]);
         }
     }
 
@@ -76,6 +82,8 @@ class Hexagon extends PIXI.Graphics {
         if (this.currentRotationVelocity == 0) {
             this.wantedRotationValue += 1;
             this.currentRotationVelocity = this.absoluteRotationVelocity;
+            this.hexagonValues.unshift(this.hexagonValues[this.hexagonValues.length-1]);
+            this.hexagonValues.pop(this.hexagonValues[this.hexagonValues.length-1]);
         }
     }
 
@@ -165,10 +173,23 @@ class Hexagon extends PIXI.Graphics {
     //when  the user stops dragging the handle
     onDragEnd(e) {
         console.log("DRAG END");
-
+        if(compareHexs(hexPath))
+        {
+            for (let i = 0; i < hexPath.length ; i++) {
+                for (let j = 0; j < hexArray.length ; j++) {
+                    if(hexPath[i] == hexArray[j])
+                    {
+                        console.log("Before Deletion: ",hexArray.length);
+                        hexArray.splice(hexArray[j],1);
+                        console.log("After Deletion: ",hexArray.length);
+                    }
+                }
+            }
+        }
         dragStartHex = null;
         hexPath = [];
         mouseHeldDown = false;
+
     }
 
     //dragging the handle to the mouse positon

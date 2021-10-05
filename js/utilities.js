@@ -106,3 +106,61 @@ function blendColorsConvertToHex(redA, greenA, blueA, redB, greenB, blueB, alpha
     let b = blueB * (blueB / 255) + blueA * alphaA * (1 - alphaB) / 255;
     return rgbToHex(r, g, b);
 }
+
+//Compares the tile values of each hexagon in the line to see if they all match up 
+//I am to stupid to make this a switch statement, if someone smarter than me could do that, that would be gretaly appreciated
+function compareHexs(hexPath) {
+    validPathChecker = [];
+    for (let i = 0; i < hexPath.length - 1; i++) {
+        if (hexPath[i].posX > hexPath[i + 1].posX && hexPath[i].posY == hexPath[i + 1].posY) {
+            if (hexPath[i].hexagonValues[4] == hexPath[i + 1].hexagonValues[1]) {
+                validPathChecker[i] = true;
+            } else {
+                validPathChecker[i] = false;
+            }
+        } else if (hexPath[i].posX < hexPath[i + 1].posX && hexPath[i].posY == hexPath[i + 1].posY) {
+            if (hexPath[i].hexagonValues[1] == hexPath[i + 1].hexagonValues[4]) {
+                validPathChecker[i] = true;
+            } else {
+                validPathChecker[i] = false;
+            }
+        } else if (hexPath[i].posX > hexPath[i + 1].posX && hexPath[i].posY > hexPath[i + 1].posY) {
+            if (hexPath[i].hexagonValues[3] == hexPath[i + 1].hexagonValues[0]) {
+                validPathChecker[i] = true;
+            } else {
+                validPathChecker[i] = false;
+            }
+        } else if (hexPath[i].posX < hexPath[i + 1].posX && hexPath[i].posY < hexPath[i + 1].posY) {
+            if (hexPath[i].hexagonValues[0] == hexPath[i + 1].hexagonValues[3]) {
+                validPathChecker[i] = true;
+            } else {
+                validPathChecker[i] = false;
+            }
+        } else if (hexPath[i].posX > hexPath[i + 1].posX && hexPath[i].posY < hexPath[i + 1].posY) {
+            if (hexPath[i].hexagonValues[5] == hexPath[i + 1].hexagonValues[2]) {
+                validPathChecker[i] = true;
+            } else {
+                validPathChecker[i] = false;
+            }
+        } else if (hexPath[i].posX < hexPath[i + 1].posX && hexPath[i].posY > hexPath[i + 1].posY) {
+            if (hexPath[i].hexagonValues[2] == hexPath[i + 1].hexagonValues[5]) {
+                validPathChecker[i] = true;
+            } else {
+                validPathChecker[i] = false;
+            }
+        } else {
+            console.log("broken");
+        }
+    }
+    for (let element of validPathChecker) {
+        if (element == false) {
+            console.log("false");
+            return false;
+        }
+        
+    }
+    console.log("true");
+    return true;
+}
+
+

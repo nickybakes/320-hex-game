@@ -68,11 +68,11 @@ function setUpGame() {
     hexPath = [];
     //set up our scenes/containers
     stage = app.stage;
-    for(let y = 0; y < hexGridHeight; y++){
+    for(let y = 0; y < hexGridHeight; y++){                                         //Had to temporarily set rotation value to zero           
         //on even row
         if(y % 2 == 0){
             for (let x = 0; x < hexGridWidth; x+= 2) {
-                let hex = new Hexagon(hexGridDisplayX + x * (hexRadius * 1), hexGridDisplayY + y * (hexRadius * 1.6), x, y, hexRadius, Math.trunc(Math.random() * 6), null, null);
+                let hex = new Hexagon(hexGridDisplayX + x * (hexRadius * 1), hexGridDisplayY + y * (hexRadius * 1.6), x, y, hexRadius, 0, null, null);
                 hexArray.push(hex);
                 app.stage.addChild(hex);
             }
@@ -80,7 +80,7 @@ function setUpGame() {
         //odd row
         else{
             for (let x = 1; x < hexGridWidth; x+= 2) {
-                let hex = new Hexagon(hexGridDisplayX + x * (hexRadius * 1), hexGridDisplayY + y * (hexRadius * 1.6), x, y, hexRadius, Math.trunc(Math.random() * 6), null, null);
+                let hex = new Hexagon(hexGridDisplayX + x * (hexRadius * 1), hexGridDisplayY + y * (hexRadius * 1.6), x, y, hexRadius, 0, null, null);
                 hexArray.push(hex);
                 app.stage.addChild(hex);
             }
@@ -162,6 +162,7 @@ function updateLoop() {
     //check for E press to rotate hex CW
     if (highlightedHex != null && keysHeld["69"]) {
         highlightedHex.rotateCW();
+        
     }
 
     //check for Q press to rotate hex CCW
