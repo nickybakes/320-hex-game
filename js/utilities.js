@@ -110,7 +110,8 @@ function blendColorsConvertToHex(redA, greenA, blueA, redB, greenB, blueB, alpha
 //Compares the tile values of each hexagon in the line to see if they all match up 
 //I am to stupid to make this a switch statement, if someone smarter than me could do that, that would be gretaly appreciated
 function compareHexs(hexPath) {
-    validPathChecker = [];
+    validPathChecker = [null];
+
     for (let i = 0; i < hexPath.length - 1; i++) {
         if (hexPath[i].posX > hexPath[i + 1].posX && hexPath[i].posY == hexPath[i + 1].posY) {
             if (hexPath[i].hexagonValues[4] == hexPath[i + 1].hexagonValues[1]) {
@@ -152,15 +153,39 @@ function compareHexs(hexPath) {
             console.log("broken");
         }
     }
+        
     for (let element of validPathChecker) {
-        if (element == false) {
+        if (element == false || element == null) {
             console.log("false");
             return false;
         }
         
     }
+
     console.log("true");
     return true;
 }
 
+function giveHexValue(rotation, colorIndices) {
+    
+    switch (rotation) {
+    case 0:
+        return [colorIndices[0], colorIndices[0], colorIndices[1], colorIndices[1], colorIndices[2], colorIndices[2]];
+    case 1:
+        return [colorIndices[2], colorIndices[0], colorIndices[0], colorIndices[1], colorIndices[1], colorIndices[2]];
+        
+    case 2:
+        return [colorIndices[2], colorIndices[2], colorIndices[0], colorIndices[0], colorIndices[1], colorIndices[1]];
+        
+    case 3:
+        return [colorIndices[1], colorIndices[2], colorIndices[2], colorIndices[0], colorIndices[0], colorIndices[1]];
+        
+    case 4:
+        return [colorIndices[1], colorIndices[1], colorIndices[2], colorIndices[2], colorIndices[0], colorIndices[0]];
+        
+    case 5:
+        return [colorIndices[0], colorIndices[1], colorIndices[1], colorIndices[2], colorIndices[2], colorIndices[0]];
+    }
+    
+}
 

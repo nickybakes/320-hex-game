@@ -51,7 +51,9 @@ class Hexagon extends PIXI.Graphics {
         this.colorsRGB;
         //let colors = [rgbToHex(255, 0, 0), rgbToHex(245, 139, 0), rgbToHex(255, 208, 0), rgbToHex(0, 145, 0), rgbToHex(0, 110, 255), rgbToHex(116, 0, 184)];
         this.colorIndices = [Math.trunc(Math.random() * 6), Math.trunc(Math.random() * 6), Math.trunc(Math.random() * 6)];
-        this.hexagonValues = [this.colorIndices[0],this.colorIndices[0],this.colorIndices[1],this.colorIndices[1],this.colorIndices[2],this.colorIndices[2]];    
+       
+        //This part assigns hexagonValues a value
+        this. hexagonValues = giveHexValue(this.rotationValue, this.colorIndices);
         
         this.drawHex();
 
@@ -141,6 +143,9 @@ class Hexagon extends PIXI.Graphics {
 
     //when the user clicks on this hexagon, start dragging the handle to the mouse positon
     onMouseEnter(e) {
+        if (this.alpha == 0) {
+            return;
+        }
         highlightedHex = this;
         this.highlighted = true;
         if (dragStartHex != null && mouseHeldDown) {
@@ -155,10 +160,14 @@ class Hexagon extends PIXI.Graphics {
     }
 
     onMouseLeave(e) {
+        if (this.alpha == 0) {
+            return;
+        }
         highlightedHex = null;
         this.highlighted = false;
         e.currentTarget.alpha = 1.0;
     }
+    
 
     //when the user clicks on this hexagon, start dragging the handle to the mouse positon
     onDragStart(e) {
@@ -179,9 +188,10 @@ class Hexagon extends PIXI.Graphics {
                 for (let j = 0; j < hexArray.length ; j++) {
                     if(hexPath[i] == hexArray[j])
                     {
-                        console.log("Before Deletion: ",hexArray.length);
-                        hexArray.splice(hexArray[j],1);
-                        console.log("After Deletion: ",hexArray.length);
+                      //deletion of hex 
+                        destroyedHexArray.push(hexArray[j]);
+                        hexArray.splice(hexArray[j], 0);
+                        hexArray[j].alpha = 0;
                     }
                 }
             }

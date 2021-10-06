@@ -35,6 +35,7 @@ const carColorKey = prefix + "carColor";
 //variables needed to run the game
 let hexRadius = 50;
 let hexArray = [];
+let destroyedHexArray = [];
 let hexGridHeight = 6;
 let hexGridWidth = 6 * 2;
 let hexPath = [];
@@ -68,11 +69,11 @@ function setUpGame() {
     hexPath = [];
     //set up our scenes/containers
     stage = app.stage;
-    for(let y = 0; y < hexGridHeight; y++){                                         //Had to temporarily set rotation value to zero           
+    for(let y = 0; y < hexGridHeight; y++){                                                 
         //on even row
         if(y % 2 == 0){
             for (let x = 0; x < hexGridWidth; x+= 2) {
-                let hex = new Hexagon(hexGridDisplayX + x * (hexRadius * 1), hexGridDisplayY + y * (hexRadius * 1.6), x, y, hexRadius, 0, null, null);
+                let hex = new Hexagon(hexGridDisplayX + x * (hexRadius * 1), hexGridDisplayY + y * (hexRadius * 1.6), x, y, hexRadius, Math.trunc(Math.random() * 6), null, null);
                 hexArray.push(hex);
                 app.stage.addChild(hex);
             }
@@ -80,7 +81,7 @@ function setUpGame() {
         //odd row
         else{
             for (let x = 1; x < hexGridWidth; x+= 2) {
-                let hex = new Hexagon(hexGridDisplayX + x * (hexRadius * 1), hexGridDisplayY + y * (hexRadius * 1.6), x, y, hexRadius, 0, null, null);
+                let hex = new Hexagon(hexGridDisplayX + x * (hexRadius * 1), hexGridDisplayY + y * (hexRadius * 1.6), x, y, hexRadius, Math.trunc(Math.random() * 6), null, null);
                 hexArray.push(hex);
                 app.stage.addChild(hex);
             }
@@ -170,6 +171,17 @@ function updateLoop() {
         highlightedHex.rotateCCW();
     }
 
+    //adds destroyed hexs to graveyard
+    for(let i = 0; i < destroyedHexArray.length; i++)
+    {
+        for (let j = 0; j < hexArray.length; j++) {
+            if(destroyedHexArray[i] == hexArray[j])
+            {
+                hexArray[j] = new Hexagon();
+            }
+        }
+    }
+    
     for (let i = 0; i < hexArray.length; i++) {
         hexArray[i].update();
     }
