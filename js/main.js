@@ -50,6 +50,10 @@ let hexGridDisplayY = 100;
 let rotationCoolDown;
 
 
+let displacementSprite;
+let displacementFilter;
+
+
 //objects that store the states of user's input/controls
 let mousePosition;
 let mouseHeldDown;
@@ -66,6 +70,9 @@ function setUpGame() {
     window.addEventListener("keydown", keysDown);
     window.addEventListener("keyup", keysUp);
 
+    //init our HUD containers for different game states
+    gameScene = new PIXI.Container();
+
     hexPath = [];
     //set up our scenes/containers
     stage = app.stage;
@@ -75,7 +82,7 @@ function setUpGame() {
             for (let x = 0; x < hexGridWidth; x+= 2) {
                 let hex = new Hexagon(hexGridDisplayX + x * (hexRadius * 1), hexGridDisplayY + y * (hexRadius * 1.6), x, y, hexRadius, Math.trunc(Math.random() * 6), null, null);
                 hexArray.push(hex);
-                app.stage.addChild(hex);
+                gameScene.addChild(hex);
             }
         }
         //odd row
@@ -83,19 +90,36 @@ function setUpGame() {
             for (let x = 1; x < hexGridWidth; x+= 2) {
                 let hex = new Hexagon(hexGridDisplayX + x * (hexRadius * 1), hexGridDisplayY + y * (hexRadius * 1.6), x, y, hexRadius, Math.trunc(Math.random() * 6), null, null);
                 hexArray.push(hex);
-                app.stage.addChild(hex);
+                gameScene.addChild(hex);
             }
         }
     }
 
     pathIndicator = new PathIndicator();
-    app.stage.addChild(pathIndicator);
+    gameScene.addChild(pathIndicator);
+
+    displacementSprite = PIXI.Sprite.from('media/displacement-map-tiling.jpg');
+    // Make sure the sprite is wrapping.
+    displacementSprite.texture.baseTexture.wrapMode = PIXI.WRAP_MODES.REPEAT;
+    displacementFilter = new PIXI.filters.DisplacementFilter(displacementSprite);
+
+    displacementSprite.position = pathIndicator.position;
+
+    gameScene.addChild(displacementSprite);
+
+    // events for drag end
+    // app.stage.on('pointerup', onDragEnd);
+    window.addEventListener('mouseup', onDragEnd);
+
+    pathIndicator.filters = [displacementFilter];
     
-    //init our HUD containers for different game states
-    gameScene = new PIXI.Container();
+    displacementFilter.scale.x = 17;
+    displacementFilter.scale.y = 17;
 
     //store our scenes for easy access later
     scenes = [titleScene, howToPlayScene, gameScene];
+
+    app.stage.addChild(gameScene);
 
     //our game state starts at 0 (title screen)
     //setGameState(0);
@@ -186,10 +210,37 @@ function updateLoop() {
         hexArray[i].update();
     }
 
+    // Offsets the displacement map each frame
+    displacementSprite.x += 1;
+    displacementSprite.y += 1;
+    // keep our displacement map's position within the necessary bounds
+    if (displacementSprite.x > displacementSprite.width) { displacementSprite.x = 0; }
+    if (displacementSprite.y > displacementSprite.height) { displacementSprite.y = 0; }
+
     //reset our controls for next frame
     keysReleased = [];
 }
 
+
+//when  the user stops dragging the handle
+function onDragEnd(e) {
+    console.log("Drag End (for whole window)");
+    if (compareHexs(hexPath)) {
+        for (let i = 0; i < hexPath.length; i++) {
+            for (let j = 0; j < hexArray.length; j++) {
+                if (hexPath[i] == hexArray[j]) {
+                    //deletion of hex 
+                    destroyedHexArray.push(hexArray[j]);
+                    hexArray.splice(hexArray[j], 0);
+                    hexArray[j].alpha = 0;
+                }
+            }
+        }
+    }
+    dragStartHex = null;
+    hexPath = [];
+    mouseHeldDown = false;
+}
 
 //event for key press downward
 function keysDown(e) {

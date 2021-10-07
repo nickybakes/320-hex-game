@@ -142,27 +142,41 @@ class Hexagon extends PIXI.Graphics {
     }
 
     //when the user clicks on this hexagon, start dragging the handle to the mouse positon
+    //if they enter the hex while dragging the handle, add this hex to the path if it follows conditions
     onMouseEnter(e) {
+        //old way of "disabling" hexes
         if (this.alpha == 0) {
             return;
         }
+
+        //"select" this hex
         highlightedHex = this;
         this.highlighted = true;
+
+        //if we have dragged onto this hex
         if (dragStartHex != null && mouseHeldDown) {
+            //search for this hex in the path
             let indexOfHexInPath = hexPath.indexOf(this);
             if (indexOfHexInPath == -1) {
-                hexPath.push(this);
+                //if it hasnt been added to the path yet, then add it
+                //if it is close enough to the currently selected hex
+                if (Math.abs(hexPath[hexPath.length - 1].posX - this.posX) <= 2 && Math.abs(hexPath[hexPath.length - 1].posY - this.posY) <= 1){
+                    hexPath.push(this);
+                }
             } else {
+                //if it already is in the path, than truncate the path down to where this hex is
                 hexPath.length = indexOfHexInPath + 1;
             }
         }
-        e.target.alpha = 1.5;
+
+        //visually highlight the hex
+        e.target.alpha = 1.3;
     }
 
     onMouseLeave(e) {
-        if (this.alpha == 0) {
-            return;
-        }
+        // if (this.alpha == 0) {
+        //     return;
+        // }
         highlightedHex = null;
         this.highlighted = false;
         e.currentTarget.alpha = 1.0;
@@ -180,26 +194,26 @@ class Hexagon extends PIXI.Graphics {
     }
 
     //when  the user stops dragging the handle
+    //DEPRECIATED: use "onDragEnd(e)" in main.js, so it tracks for the whole window
     onDragEnd(e) {
-        console.log("DRAG END");
-        if(compareHexs(hexPath))
-        {
-            for (let i = 0; i < hexPath.length ; i++) {
-                for (let j = 0; j < hexArray.length ; j++) {
-                    if(hexPath[i] == hexArray[j])
-                    {
-                      //deletion of hex 
-                        destroyedHexArray.push(hexArray[j]);
-                        hexArray.splice(hexArray[j], 0);
-                        hexArray[j].alpha = 0;
-                    }
-                }
-            }
-        }
-        dragStartHex = null;
-        hexPath = [];
-        mouseHeldDown = false;
-
+        // console.log("DRAG END");
+        // if(compareHexs(hexPath))
+        // {
+        //     for (let i = 0; i < hexPath.length ; i++) {
+        //         for (let j = 0; j < hexArray.length ; j++) {
+        //             if(hexPath[i] == hexArray[j])
+        //             {
+        //               //deletion of hex 
+        //                 destroyedHexArray.push(hexArray[j]);
+        //                 hexArray.splice(hexArray[j], 0);
+        //                 hexArray[j].alpha = 0;
+        //             }
+        //         }
+        //     }
+        // }
+        // dragStartHex = null;
+        // hexPath = [];
+        // mouseHeldDown = false;
     }
 
     //dragging the handle to the mouse positon
@@ -226,18 +240,20 @@ class PathIndicator extends PIXI.Graphics {
         this.beginFill();
         this.lineStyle({
             width: 11,
-            color: 0xffffff
+            color: 0xffffff,
+            join: 'round',
+            cap: 'round'
         });
         for (let i = 0; i < hexPath.length - 1; i++) {
             this.moveTo(hexPath[i].x, hexPath[i].y)
-                .lineTo(hexPath[i + 1].x, hexPath[i + 1].y)
+                .lineTo(hexPath[i + 1].x, hexPath[i + 1].y);
         }
         if (dragStartHex != null && highlightedHex == dragStartHex) {
             this.moveTo(dragStartHex.x, dragStartHex.y);
             this.lineTo(mousePosition.x, mousePosition.y);
         }
-        if (dragStartHex != null && highlightedHex != null) {
-            this.moveTo(highlightedHex.x, highlightedHex.y);
+        else if (dragStartHex != null) {
+            this.moveTo(hexPath[hexPath.length - 1].x, hexPath[hexPath.length - 1].y);
             this.lineTo(mousePosition.x, mousePosition.y);
         }
         this.endFill();
