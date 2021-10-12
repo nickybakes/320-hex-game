@@ -378,7 +378,8 @@ class HexBreakParticleSystem extends PIXI.Graphics {
                 colorIndex: colorIndices[Math.trunc(Math.random() * 3)],
                 brightness: Math.trunc((Math.random() - .5) * 50 * 2),
                 rotationDegrees: Math.trunc(clamp(Math.random(), .2, .8) * 360),
-                radius: Math.trunc(clamp(Math.random(), .4, 1) * 24)
+                radius: Math.trunc(clamp(Math.random(), .4, 1) * 24),
+                rotationalVelocity: Math.trunc((Math.random() - .5) * 1100 * 2)
             });
         }
     }
@@ -392,6 +393,8 @@ class HexBreakParticleSystem extends PIXI.Graphics {
 
             brokenPiece.x += brokenPiece.velX * frameTime;
             brokenPiece.y += brokenPiece.velY * frameTime;
+
+            brokenPiece.rotationDegrees += brokenPiece.rotationalVelocity * frameTime;
         }
     }
 

@@ -200,12 +200,12 @@ function updateLoop() {
     mousePosition = app.renderer.plugins.interaction.mouse.global;
 
     //update all the hex particle systems
-    for(let i = 0; i < hexBreakParticles.length; i++){
+    for (let i = 0; i < hexBreakParticles.length; i++) {
         hexBreakParticles[i].update();
         hexBreakParticles[i].drawParticleSystem();
 
         //remove "dead" ones
-        if (hexBreakParticles[i].currentLifeTime <= 0){
+        if (hexBreakParticles[i].currentLifeTime <= 0) {
             hexBreakParticles[i].clear();
             gameScene.removeChild(hexBreakParticles[i]);
             hexBreakParticles.shift();
@@ -214,10 +214,10 @@ function updateLoop() {
     }
 
     //break the hexes sequentially, in order they are in the path
-    if (hexBreakAnimationTime > 0){
+    if (hexBreakAnimationTime > 0) {
         hexBreakAnimationTime -= frameTime;
         hexBreakAnimationTimePerHex -= frameTime;
-        if (hexPath.length > 0 && hexBreakAnimationTimePerHex <= 0){
+        if (hexPath.length > 0 && hexBreakAnimationTimePerHex <= 0) {
             breakHex(hexPath[0]);
             hexPath.shift();
             hexBreakAnimationTimePerHex = hexBreakAnimationTimeMaxPerHex;
@@ -226,7 +226,7 @@ function updateLoop() {
     }
 
     //once we are done watching all the hexes break, begin making them fall to fill in the space
-    if(hexBreakAnimationTime <= 0 && hexBreakAnimationTime != -1){
+    if (hexBreakAnimationTime <= 0 && hexBreakAnimationTime != -1) {
         hexBreakAnimationTime = -1;
         hexBreakAnimationTimePerHex = -1;
         scanBoardForFallableHexes();
@@ -283,10 +283,10 @@ function updateLoop() {
     //ones every fallable hex has fallen 1 tile, it checks again for any more fallen hexes
     //the animation is over once every spot on the baord is filled with a hex
     if (hexFallAnimationTime <= 0 && hexFallAnimationTime != -1) {
-        if (scanBoardForFallableHexes()){
+        if (scanBoardForFallableHexes()) {
             hexFallAnimationTime = hexFallAnimationTimeMax;
         }
-        else{
+        else {
             hexFallAnimationTime = -1;
             for (let i = 0; i < hexGridWidth / 2; i++) {
                 columnWaitAmount[i] = 0;
@@ -319,7 +319,7 @@ function findHexAtPos(x, y) {
 //spawns a particle system, and moves the broken hex up above the game board
 //rerolls its color values, so it looks like a completely new, random hex
 //has been spawned in from up above
-function breakHex(hex){
+function breakHex(hex) {
     //spawn a break hex particle
     let particle = new HexBreakParticleSystem(hex.x, hex.y, hex.colorIndices[0], hex.colorIndices[1], hex.colorIndices[2]);
     hexBreakParticles.push(particle);
@@ -351,12 +351,20 @@ function onDragEnd(e) {
         //start the hex breaking animation
         hexBreakAnimationTime = hexBreakAnimationTimeMax;
         hexBreakAnimationTimeMaxPerHex = hexBreakAnimationTimeMax / hexPath.length;
+
+        //if too many hexes are in the path, the break timer could be too small
+        //hexes would need to break in between frames basically
+        //so we effectively clamp it to prevent it from getting too small
+        if (hexBreakAnimationTimeMaxPerHex < .03) {
+            hexBreakAnimationTimeMaxPerHex = .03;
+            hexBreakAnimationTime = hexPath.length * .03;
+        }
+
         hexBreakAnimationTimePerHex = 0;
         hexBreakAnimationTime += .1;
 
-        hexBreakParticles = [];
         pathIndicator.clear();
-    }else{
+    } else {
         hexPath = [];
     }
     dragStartHex = null;
@@ -374,6 +382,50 @@ function scanBoardForFallableHexes() {
             hexIsFallable = true;
     }
     return hexIsFallable;
+}
+
+
+//Cool debug function that destroys all hexes sequentially, top to bottom, left to right
+function breakAllHexes() {
+    if (hexFallAnimationTime > 0 || hexBreakAnimationTime > 0)
+        return;
+
+    hexPath = [];
+
+    for (let y = 0; y < hexGridHeight; y++) {
+        //on even row
+        if (y % 2 == 0) {
+            for (let x = 0; x < hexGridWidth; x += 2) {
+                hexPath.push(findHexAtPos(x, y));
+            }
+        }
+        //odd row
+        else {
+            for (let x = 1; x < hexGridWidth; x += 2) {
+                hexPath.push(findHexAtPos(x, y));
+            }
+        }
+    }
+
+    console.log("Breaking all hexes");
+    //start the hex breaking animation
+    hexBreakAnimationTime = hexBreakAnimationTimeMax;
+    hexBreakAnimationTimeMaxPerHex = hexBreakAnimationTimeMax / hexPath.length;
+
+    //if too many hexes are in the path, the break timer could be too small
+    //hexes would need to break in between frames basically
+    //so we effectively clamp it to prevent it from getting too small
+    if (hexBreakAnimationTimeMaxPerHex < .03) {
+        hexBreakAnimationTimeMaxPerHex = .03;
+        hexBreakAnimationTime = hexPath.length * .03;
+    }
+
+    hexBreakAnimationTimePerHex = 0;
+    hexBreakAnimationTime += .1;
+
+    pathIndicator.clear();
+    dragStartHex = null;
+    mouseHeldDown = false;
 }
 
 //translates a position in the hex array/hex grid to the pixel coordinates on screen
