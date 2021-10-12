@@ -69,7 +69,10 @@ class Hexagon extends PIXI.Graphics {
         this.endDragFunction = endDragFunction;
     }
 
-    randomizeColors(){
+    randomizeColors() {
+        this.rotationValue = Math.trunc(Math.random() * 6);
+        this.rotationValue = moveIntoRange(this.rotationValue, 0, 6);
+        this.wantedRotationValue = this.rotationValue;
         this.colorIndices = [];
         this.hexagonValues = [];
         this.colorIndices = [Math.trunc(Math.random() * 6), Math.trunc(Math.random() * 6), Math.trunc(Math.random() * 6)];
@@ -104,18 +107,19 @@ class Hexagon extends PIXI.Graphics {
     }
 
     update() {
-        if(this.falling && hexFallAnimationTime > 0){
+        if (this.falling && hexFallAnimationTime > 0) {
             this.x = lerp(this.x, this.belowX, (hexFallAnimationTimeMax - hexFallAnimationTime) / hexFallAnimationTimeMax);
             this.y = lerp(this.y, this.belowY, (hexFallAnimationTimeMax - hexFallAnimationTime) / hexFallAnimationTimeMax);
         }
 
         if (this.falling && hexFallAnimationTime <= 0) {
+
             this.x = this.belowX;
             this.y = this.belowY;
             this.falling = false;
         }
 
-        if(hexFallAnimationTime > 0)
+        if (hexFallAnimationTime > 0)
             return;
 
         if (this.currentRotationVelocity > 0 && this.wantedRotationValue - this.rotationValue > 0) {
@@ -133,6 +137,9 @@ class Hexagon extends PIXI.Graphics {
             this.rotationValue = this.wantedRotationValue;
             this.currentRotationVelocity = 0;
 
+            this.rotationValue = moveIntoRange(this.rotationValue, 0, 6);
+            this.wantedRotationValue = this.rotationValue;
+
             this.hexagonValues.unshift(this.hexagonValues[this.hexagonValues.length - 1]);
             this.hexagonValues.pop();
 
@@ -143,9 +150,12 @@ class Hexagon extends PIXI.Graphics {
             this.rotationValue = this.wantedRotationValue;
             this.currentRotationVelocity = 0;
 
+            this.rotationValue = moveIntoRange(this.rotationValue, 0, 6);
+            this.wantedRotationValue = this.rotationValue;
+
             this.hexagonValues.push(this.hexagonValues[0]);
             this.hexagonValues.shift();
-            
+
             this.clear();
             this.drawHex();
         } else if (this.currentRotationVelocity != 0 && this.rotationValue == this.wantedRotationValue) {
@@ -254,7 +264,7 @@ class Hexagon extends PIXI.Graphics {
         //console.log("DRAG MOVE")
     }
 
-    checkIfFallable(){
+    checkIfFallable() {
         this.falling = false;
         if (this.posY != hexGridHeight - 1) {
             let belowHex = this.findHexBelow();
@@ -264,7 +274,7 @@ class Hexagon extends PIXI.Graphics {
                 this.posX = this.belowPosX;
                 this.posY++;
                 this.falling = true;
-            }else{
+            } else {
                 this.falling = false;
             }
         }
@@ -325,5 +335,79 @@ class PathIndicator extends PIXI.Graphics {
             this.lineTo(mousePosition.x, mousePosition.y);
         }
         this.endFill();
+    }
+}
+
+
+//A system that draws and moves polygons when a hex is broken so it
+//looks like it visually exploded
+class HexBreakParticleSystem extends PIXI.Graphics {
+
+    colorsRGB = [{ r: 255, g: 0, b: 0 }, { r: 245, g: 139, b: 0 }, { r: 255, g: 208, b: 0 }, { r: 0, g: 145, b: 0 }, { r: 0, g: 110, b: 255 }, { r: 116, g: 0, b: 184 }];
+
+    brokenPieces = [];
+
+    gravity = 1200;
+
+    currentLifeTime;
+
+    currentLifeTimeMax = 2;
+
+
+    //inits this particle system and stores its values
+    constructor(x, y, colorIndex1, colorIndex2, colorIndex3) {
+        super();
+        this.x = x;
+        this.y = y;
+        this.interactive = false;
+        this.buttonMode = false;
+
+        this.currentLifeTime = this.currentLifeTimeMax;
+
+        let colorIndices = [colorIndex1, colorIndex2, colorIndex3];
+
+        //set up broken pieces
+        let numBrokenPieces = Math.trunc(clamp(Math.random(), .4, 1) * 30);
+
+        for (let i = 0; i < numBrokenPieces; i++) {
+            this.brokenPieces.push({
+                x: Math.trunc((Math.random() - .5) * 50 * 2),
+                y: Math.trunc((Math.random() - .5) * 50 * 2),
+                velX: Math.trunc((Math.random() - .5) * 600 * 2),
+                velY: Math.trunc((Math.random() - .2) * -600 * 2),
+                colorIndex: colorIndices[Math.trunc(Math.random() * 3)],
+                brightness: Math.trunc((Math.random() - .5) * 50 * 2),
+                rotationDegrees: Math.trunc(clamp(Math.random(), .2, .8) * 360),
+                radius: Math.trunc(clamp(Math.random(), .4, 1) * 24)
+            });
+        }
+    }
+
+    update(){
+        this.currentLifeTime -= frameTime;
+        for (let i = 0; i < this.brokenPieces.length; i++) {
+            let brokenPiece = this.brokenPieces[i];
+
+            brokenPiece.velY += this.gravity * frameTime;
+
+            brokenPiece.x += brokenPiece.velX * frameTime;
+            brokenPiece.y += brokenPiece.velY * frameTime;
+        }
+    }
+
+    drawParticleSystem() {
+        this.clear();
+        for (let i = 0; i < this.brokenPieces.length; i++) {
+            let brokenPiece = this.brokenPieces[i];
+            let color = this.colorsRGB[brokenPiece.colorIndex];
+
+            this.beginFill(rgbToHex(color.r + brokenPiece.brightness, color.g + brokenPiece.brightness, color.b + brokenPiece.brightness));
+            this.drawPolygon([
+                brokenPiece.x + Math.sin(rad(brokenPiece.rotationDegrees)) * brokenPiece.radius, brokenPiece.y + Math.cos(rad(brokenPiece.rotationDegrees)) * brokenPiece.radius,
+                brokenPiece.x + Math.sin(rad(120 + brokenPiece.rotationDegrees)) * brokenPiece.radius, brokenPiece.y + Math.cos(rad(120 + brokenPiece.rotationDegrees)) * brokenPiece.radius,
+                brokenPiece.x + Math.sin(rad(240 + brokenPiece.rotationDegrees)) * brokenPiece.radius, brokenPiece.y + Math.cos(rad(240 + brokenPiece.rotationDegrees)) * brokenPiece.radius
+            ])
+            this.endFill();
+        }
     }
 }

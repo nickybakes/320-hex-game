@@ -60,6 +60,8 @@ let hexBreakAnimationTimeMax = .4;
 let hexBreakAnimationTimePerHex;
 let hexBreakAnimationTimeMaxPerHex;
 
+let hexBreakParticles = [];
+
 //the amount of hexes waiting above row 0 in each column, 
 //waiting to be dropped into the playable board
 let columnWaitAmount = [];
@@ -197,6 +199,21 @@ function updateLoop() {
     //get our mouse position
     mousePosition = app.renderer.plugins.interaction.mouse.global;
 
+    //update all the hex particle systems
+    for(let i = 0; i < hexBreakParticles.length; i++){
+        hexBreakParticles[i].update();
+        hexBreakParticles[i].drawParticleSystem();
+
+        //remove "dead" ones
+        if (hexBreakParticles[i].currentLifeTime <= 0){
+            hexBreakParticles[i].clear();
+            gameScene.removeChild(hexBreakParticles[i]);
+            hexBreakParticles.shift();
+            i--;
+        }
+    }
+
+    //break the hexes sequentially, in order they are in the path
     if (hexBreakAnimationTime > 0){
         hexBreakAnimationTime -= frameTime;
         hexBreakAnimationTimePerHex -= frameTime;
@@ -208,6 +225,7 @@ function updateLoop() {
         return;
     }
 
+    //once we are done watching all the hexes break, begin making them fall to fill in the space
     if(hexBreakAnimationTime <= 0 && hexBreakAnimationTime != -1){
         hexBreakAnimationTime = -1;
         hexBreakAnimationTimePerHex = -1;
@@ -227,6 +245,7 @@ function updateLoop() {
         highlightedHex.rotateCCW();
     }
 
+    //DEBUG, prints hex info
     if (highlightedHex != null && keysHeld["87"]) {
         console.log(highlightedHex.hexagonValues);
         console.log(highlightedHex.rotationValue);
@@ -242,6 +261,7 @@ function updateLoop() {
         }
     }
 
+    //update hex data
     for (let i = 0; i < hexArray.length; i++) {
         hexArray[i].update();
     }
@@ -259,6 +279,9 @@ function updateLoop() {
     if (hexFallAnimationTime > 0)
         hexFallAnimationTime -= frameTime;
 
+    //animates the hexes to fall during the hex fall animation
+    //ones every fallable hex has fallen 1 tile, it checks again for any more fallen hexes
+    //the animation is over once every spot on the baord is filled with a hex
     if (hexFallAnimationTime <= 0 && hexFallAnimationTime != -1) {
         if (scanBoardForFallableHexes()){
             hexFallAnimationTime = hexFallAnimationTimeMax;
@@ -293,7 +316,15 @@ function findHexAtPos(x, y) {
     return null;
 }
 
+//spawns a particle system, and moves the broken hex up above the game board
+//rerolls its color values, so it looks like a completely new, random hex
+//has been spawned in from up above
 function breakHex(hex){
+    //spawn a break hex particle
+    let particle = new HexBreakParticleSystem(hex.x, hex.y, hex.colorIndices[0], hex.colorIndices[1], hex.colorIndices[2]);
+    hexBreakParticles.push(particle);
+    gameScene.addChild(particle);
+
     let column = Math.trunc(hex.posX / 2);
     columnWaitAmount[column]++;
     hex.posY = -columnWaitAmount[column];
@@ -305,7 +336,6 @@ function breakHex(hex){
     hex.x = getScreenSpaceX(hex.posX);
     hex.y = getScreenSpaceY(hex.posY);
     hex.falling = true;
-    hex.rotationValue = Math.trunc(Math.random() * 6);
     hex.randomizeColors();
 }
 
@@ -318,21 +348,24 @@ function onDragEnd(e) {
     console.log("Drag End (for whole window)");
     let completePath = compareHexs(hexPath);
     if (completePath) {
+        //start the hex breaking animation
         hexBreakAnimationTime = hexBreakAnimationTimeMax;
         hexBreakAnimationTimeMaxPerHex = hexBreakAnimationTimeMax / hexPath.length;
         hexBreakAnimationTimePerHex = 0;
         hexBreakAnimationTime += .1;
+
+        hexBreakParticles = [];
         pathIndicator.clear();
     }else{
         hexPath = [];
     }
-    // if (completePath) {
-    //     scanBoardForFallableHexes();
-    // }
     dragStartHex = null;
     mouseHeldDown = false;
 }
 
+//checks if any hex is fallable (meaning it can move down 1 row to fill an empty slot
+//in the game board)
+//returns TRUE if atleast 1 hex can fall, false if no hex can fall
 function scanBoardForFallableHexes() {
     let hexIsFallable = false;
     for (let i = hexArray.length - 1; i >= 0; i--) {
@@ -343,10 +376,12 @@ function scanBoardForFallableHexes() {
     return hexIsFallable;
 }
 
+//translates a position in the hex array/hex grid to the pixel coordinates on screen
 function getScreenSpaceX(x) {
     return hexGridDisplayX + x * (hexRadius * 1);
 }
 
+//translates a position in the hex array/hex grid to the pixel coordinates on screen
 function getScreenSpaceY(y) {
     return hexGridDisplayY + y * (hexRadius * 1.6);
 }
