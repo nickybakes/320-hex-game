@@ -26,10 +26,15 @@ class Hexagon extends PIXI.Graphics {
 
     absoluteRotationVelocity = 10;
 
+    falling;
+    belowX;
+    belowY;
+    belowPosX;
+
 
     //stores values of hexagon
     hexagonValues;
-    
+
 
 
     colorsRGB = [{ r: 255, g: 0, b: 0 }, { r: 245, g: 139, b: 0 }, { r: 255, g: 208, b: 0 }, { r: 0, g: 145, b: 0 }, { r: 0, g: 110, b: 255 }, { r: 116, g: 0, b: 184 }];
@@ -48,20 +53,13 @@ class Hexagon extends PIXI.Graphics {
         this.interactive = true;
         this.buttonMode = true;
 
-        this.colorsRGB;
-        //let colors = [rgbToHex(255, 0, 0), rgbToHex(245, 139, 0), rgbToHex(255, 208, 0), rgbToHex(0, 145, 0), rgbToHex(0, 110, 255), rgbToHex(116, 0, 184)];
-        this.colorIndices = [Math.trunc(Math.random() * 6), Math.trunc(Math.random() * 6), Math.trunc(Math.random() * 6)];
-       
-        //This part assigns hexagonValues a value
-        this. hexagonValues = giveHexValue(this.rotationValue, this.colorIndices);
-        
-        this.drawHex();
+        this.randomizeColors();
 
         this.on('pointerover', this.onMouseEnter);
         this.on('pointerout', this.onMouseLeave);
 
         // events for drag start
-        this.on('pointerdown', this.onDragStart);       
+        this.on('pointerdown', this.onDragStart);
         // events for drag end
         this.on('pointerup', this.onDragEnd);
         // events for drag move
@@ -71,26 +69,56 @@ class Hexagon extends PIXI.Graphics {
         this.endDragFunction = endDragFunction;
     }
 
-    rotateCW(){
-        if(this.currentRotationVelocity == 0){
+    randomizeColors(){
+        this.colorIndices = [];
+        this.hexagonValues = [];
+        this.colorIndices = [Math.trunc(Math.random() * 6), Math.trunc(Math.random() * 6), Math.trunc(Math.random() * 6)];
+
+        //This part assigns hexagonValues a value
+        this.hexagonValues = giveHexValue(this.rotationValue, this.colorIndices);
+
+        this.clear();
+        this.drawHex();
+    }
+
+    rotateCW() {
+        if (rotationCoolDown > 0 || hexFallAnimationTime > 0)
+            return;
+
+        if (this.currentRotationVelocity == 0) {
+            rotationCoolDown = rotationCoolDownMax;
             this.wantedRotationValue -= 1;
             this.currentRotationVelocity = -this.absoluteRotationVelocity;
-            this.hexagonValues.push(this.hexagonValues[0]);
-            this.hexagonValues.shift(this.hexagonValues[0]);
         }
     }
 
     rotateCCW() {
+        if (rotationCoolDown > 0 || hexFallAnimationTime > 0)
+            return;
+
         if (this.currentRotationVelocity == 0) {
+            rotationCoolDown = rotationCoolDownMax;
             this.wantedRotationValue += 1;
             this.currentRotationVelocity = this.absoluteRotationVelocity;
-            this.hexagonValues.unshift(this.hexagonValues[this.hexagonValues.length-1]);
-            this.hexagonValues.pop(this.hexagonValues[this.hexagonValues.length-1]);
         }
     }
 
-    update(){
-        if(this.currentRotationVelocity > 0 && this.wantedRotationValue - this.rotationValue > 0){
+    update() {
+        if(this.falling && hexFallAnimationTime > 0){
+            this.x = lerp(this.x, this.belowX, (hexFallAnimationTimeMax - hexFallAnimationTime) / hexFallAnimationTimeMax);
+            this.y = lerp(this.y, this.belowY, (hexFallAnimationTimeMax - hexFallAnimationTime) / hexFallAnimationTimeMax);
+        }
+
+        if (this.falling && hexFallAnimationTime <= 0) {
+            this.x = this.belowX;
+            this.y = this.belowY;
+            this.falling = false;
+        }
+
+        if(hexFallAnimationTime > 0)
+            return;
+
+        if (this.currentRotationVelocity > 0 && this.wantedRotationValue - this.rotationValue > 0) {
             this.rotationValue += this.currentRotationVelocity * frameTime;
             this.clear();
             this.drawHex();
@@ -104,21 +132,29 @@ class Hexagon extends PIXI.Graphics {
         if (this.currentRotationVelocity > 0 && this.wantedRotationValue - this.rotationValue < 0) {
             this.rotationValue = this.wantedRotationValue;
             this.currentRotationVelocity = 0;
+
+            this.hexagonValues.unshift(this.hexagonValues[this.hexagonValues.length - 1]);
+            this.hexagonValues.pop();
+
             this.clear();
             this.drawHex();
         }
         else if (this.currentRotationVelocity < 0 && this.rotationValue - this.wantedRotationValue < 0) {
             this.rotationValue = this.wantedRotationValue;
             this.currentRotationVelocity = 0;
+
+            this.hexagonValues.push(this.hexagonValues[0]);
+            this.hexagonValues.shift();
+            
             this.clear();
             this.drawHex();
-        } else if (this.currentRotationVelocity != 0 && this.rotationValue == this.wantedRotationValue){
+        } else if (this.currentRotationVelocity != 0 && this.rotationValue == this.wantedRotationValue) {
             this.currentRotationVelocity = 0;
         }
 
     }
 
-    drawHex(){
+    drawHex() {
         this.beginFill();
 
         for (let i = 0; i < 6; i++) {
@@ -144,14 +180,14 @@ class Hexagon extends PIXI.Graphics {
     //when the user clicks on this hexagon, start dragging the handle to the mouse positon
     //if they enter the hex while dragging the handle, add this hex to the path if it follows conditions
     onMouseEnter(e) {
-        //old way of "disabling" hexes
-        if (this.alpha == 0) {
-            return;
-        }
-
         //"select" this hex
         highlightedHex = this;
         this.highlighted = true;
+        //visually highlight the hex
+        e.target.alpha = 1.3;
+
+        if (hexFallAnimationTime > 0 || hexBreakAnimationTime > 0)
+            return;
 
         //if we have dragged onto this hex
         if (dragStartHex != null && mouseHeldDown) {
@@ -160,7 +196,7 @@ class Hexagon extends PIXI.Graphics {
             if (indexOfHexInPath == -1) {
                 //if it hasnt been added to the path yet, then add it
                 //if it is close enough to the currently selected hex
-                if (Math.abs(hexPath[hexPath.length - 1].posX - this.posX) <= 2 && Math.abs(hexPath[hexPath.length - 1].posY - this.posY) <= 1){
+                if (Math.abs(hexPath[hexPath.length - 1].posX - this.posX) <= 2 && Math.abs(hexPath[hexPath.length - 1].posY - this.posY) <= 1) {
                     hexPath.push(this);
                 }
             } else {
@@ -168,23 +204,20 @@ class Hexagon extends PIXI.Graphics {
                 hexPath.length = indexOfHexInPath + 1;
             }
         }
-
-        //visually highlight the hex
-        e.target.alpha = 1.3;
     }
 
     onMouseLeave(e) {
-        // if (this.alpha == 0) {
-        //     return;
-        // }
         highlightedHex = null;
         this.highlighted = false;
         e.currentTarget.alpha = 1.0;
     }
-    
+
 
     //when the user clicks on this hexagon, start dragging the handle to the mouse positon
     onDragStart(e) {
+        if (hexFallAnimationTime > 0 || hexBreakAnimationTime > 0)
+            return;
+
         if (this == highlightedHex && dragStartHex == null) {
             console.log("DRAG START");
             dragStartHex = this;
@@ -219,6 +252,41 @@ class Hexagon extends PIXI.Graphics {
     //dragging the handle to the mouse positon
     onDragMove(e) {
         //console.log("DRAG MOVE")
+    }
+
+    checkIfFallable(){
+        this.falling = false;
+        if (this.posY != hexGridHeight - 1) {
+            let belowHex = this.findHexBelow();
+
+            if (belowHex == null) {
+                hexFallAnimationTime = hexFallAnimationTimeMax;
+                this.posX = this.belowPosX;
+                this.posY++;
+                this.falling = true;
+            }else{
+                this.falling = false;
+            }
+        }
+    }
+
+
+    findHexBelow() {
+        //even row
+        if (this.posY % 2 == 0) {
+            this.belowX = getScreenSpaceX(this.posX + 1);
+            this.belowY = getScreenSpaceY(this.posY + 1);
+            this.belowPosX = this.posX + 1;
+            return findHexAtPos(this.posX + 1, this.posY + 1);
+        }
+        //odd row
+        else {
+            this.belowX = getScreenSpaceX(this.posX - 1);
+            this.belowY = getScreenSpaceY(this.posY + 1);
+            this.belowPosX = this.posX - 1;
+            return findHexAtPos(this.posX - 1, this.posY + 1);
+        }
+
     }
 }
 

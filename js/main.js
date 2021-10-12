@@ -48,7 +48,21 @@ let hexGridDisplayX = 100;
 let hexGridDisplayY = 100;
 
 let rotationCoolDown;
+let rotationCoolDownMax = .2;
 
+//time during falling animation of hexes falling 1 row,
+//set to -1 if no longer falling at all
+let hexFallAnimationTime;
+let hexFallAnimationTimeMax = .3;
+
+let hexBreakAnimationTime;
+let hexBreakAnimationTimeMax = .4;
+let hexBreakAnimationTimePerHex;
+let hexBreakAnimationTimeMaxPerHex;
+
+//the amount of hexes waiting above row 0 in each column, 
+//waiting to be dropped into the playable board
+let columnWaitAmount = [];
 
 let displacementSprite;
 let displacementFilter;
@@ -76,23 +90,27 @@ function setUpGame() {
     hexPath = [];
     //set up our scenes/containers
     stage = app.stage;
-    for(let y = 0; y < hexGridHeight; y++){                                                 
+    for (let y = 0; y < hexGridHeight; y++) {
         //on even row
-        if(y % 2 == 0){
-            for (let x = 0; x < hexGridWidth; x+= 2) {
-                let hex = new Hexagon(hexGridDisplayX + x * (hexRadius * 1), hexGridDisplayY + y * (hexRadius * 1.6), x, y, hexRadius, Math.trunc(Math.random() * 6), null, null);
+        if (y % 2 == 0) {
+            for (let x = 0; x < hexGridWidth; x += 2) {
+                let hex = new Hexagon(getScreenSpaceX(x), getScreenSpaceY(y), x, y, hexRadius, Math.trunc(Math.random() * 6), null, null);
                 hexArray.push(hex);
                 gameScene.addChild(hex);
             }
         }
         //odd row
-        else{
-            for (let x = 1; x < hexGridWidth; x+= 2) {
-                let hex = new Hexagon(hexGridDisplayX + x * (hexRadius * 1), hexGridDisplayY + y * (hexRadius * 1.6), x, y, hexRadius, Math.trunc(Math.random() * 6), null, null);
+        else {
+            for (let x = 1; x < hexGridWidth; x += 2) {
+                let hex = new Hexagon(getScreenSpaceX(x), getScreenSpaceY(y), x, y, hexRadius, Math.trunc(Math.random() * 6), null, null);
                 hexArray.push(hex);
                 gameScene.addChild(hex);
             }
         }
+    }
+
+    for (let i = 0; i < hexGridWidth / 2; i++) {
+        columnWaitAmount.push(0);
     }
 
     pathIndicator = new PathIndicator();
@@ -103,8 +121,6 @@ function setUpGame() {
     displacementSprite.texture.baseTexture.wrapMode = PIXI.WRAP_MODES.REPEAT;
     displacementFilter = new PIXI.filters.DisplacementFilter(displacementSprite);
 
-    displacementSprite.position = pathIndicator.position;
-
     gameScene.addChild(displacementSprite);
 
     // events for drag end
@@ -112,7 +128,7 @@ function setUpGame() {
     window.addEventListener('mouseup', onDragEnd);
 
     pathIndicator.filters = [displacementFilter];
-    
+
     displacementFilter.scale.x = 17;
     displacementFilter.scale.y = 17;
 
@@ -181,13 +197,29 @@ function updateLoop() {
     //get our mouse position
     mousePosition = app.renderer.plugins.interaction.mouse.global;
 
+    if (hexBreakAnimationTime > 0){
+        hexBreakAnimationTime -= frameTime;
+        hexBreakAnimationTimePerHex -= frameTime;
+        if (hexPath.length > 0 && hexBreakAnimationTimePerHex <= 0){
+            breakHex(hexPath[0]);
+            hexPath.shift();
+            hexBreakAnimationTimePerHex = hexBreakAnimationTimeMaxPerHex;
+        }
+        return;
+    }
+
+    if(hexBreakAnimationTime <= 0 && hexBreakAnimationTime != -1){
+        hexBreakAnimationTime = -1;
+        hexBreakAnimationTimePerHex = -1;
+        scanBoardForFallableHexes();
+    }
+
     pathIndicator.clear();
     pathIndicator.drawLine();
 
     //check for E press to rotate hex CW
     if (highlightedHex != null && keysHeld["69"]) {
         highlightedHex.rotateCW();
-        
     }
 
     //check for Q press to rotate hex CCW
@@ -195,17 +227,21 @@ function updateLoop() {
         highlightedHex.rotateCCW();
     }
 
+    if (highlightedHex != null && keysHeld["87"]) {
+        console.log(highlightedHex.hexagonValues);
+        console.log(highlightedHex.rotationValue);
+        console.log(highlightedHex.wantedRotationValue);
+    }
+
     //adds destroyed hexs to graveyard
-    for(let i = 0; i < destroyedHexArray.length; i++)
-    {
+    for (let i = 0; i < destroyedHexArray.length; i++) {
         for (let j = 0; j < hexArray.length; j++) {
-            if(destroyedHexArray[i] == hexArray[j])
-            {
+            if (destroyedHexArray[i] == hexArray[j]) {
                 hexArray[j] = new Hexagon();
             }
         }
     }
-    
+
     for (let i = 0; i < hexArray.length; i++) {
         hexArray[i].update();
     }
@@ -217,29 +253,102 @@ function updateLoop() {
     if (displacementSprite.x > displacementSprite.width) { displacementSprite.x = 0; }
     if (displacementSprite.y > displacementSprite.height) { displacementSprite.y = 0; }
 
+    if (rotationCoolDown > 0)
+        rotationCoolDown -= frameTime;
+
+    if (hexFallAnimationTime > 0)
+        hexFallAnimationTime -= frameTime;
+
+    if (hexFallAnimationTime <= 0 && hexFallAnimationTime != -1) {
+        if (scanBoardForFallableHexes()){
+            hexFallAnimationTime = hexFallAnimationTimeMax;
+        }
+        else{
+            hexFallAnimationTime = -1;
+            for (let i = 0; i < hexGridWidth / 2; i++) {
+                columnWaitAmount[i] = 0;
+            }
+        }
+    }
+
     //reset our controls for next frame
     keysReleased = [];
+}
+
+//finds a hexagon as a specific positon on the grid
+//if no hex exists there, then null is returned
+function findHexAtPos(x, y) {
+    if (y >= hexGridHeight)
+        return null;
+
+    if (x >= hexGridWidth || x < 0)
+        return null;
+
+    for (let i = 0; i < hexArray.length; i++) {
+        if (hexArray[i].posX == x && hexArray[i].posY == y) {
+            return hexArray[i];
+        }
+    }
+
+    return null;
+}
+
+function breakHex(hex){
+    let column = Math.trunc(hex.posX / 2);
+    columnWaitAmount[column]++;
+    hex.posY = -columnWaitAmount[column];
+    if (hex.posY % 2 == 0) {
+        hex.posX = column * 2
+    } else {
+        hex.posX = column * 2 + 1;
+    }
+    hex.x = getScreenSpaceX(hex.posX);
+    hex.y = getScreenSpaceY(hex.posY);
+    hex.falling = true;
+    hex.rotationValue = Math.trunc(Math.random() * 6);
+    hex.randomizeColors();
 }
 
 
 //when  the user stops dragging the handle
 function onDragEnd(e) {
+    if (hexFallAnimationTime > 0 || hexBreakAnimationTime > 0)
+        return;
+
     console.log("Drag End (for whole window)");
-    if (compareHexs(hexPath)) {
-        for (let i = 0; i < hexPath.length; i++) {
-            for (let j = 0; j < hexArray.length; j++) {
-                if (hexPath[i] == hexArray[j]) {
-                    //deletion of hex 
-                    destroyedHexArray.push(hexArray[j]);
-                    hexArray.splice(hexArray[j], 0);
-                    hexArray[j].alpha = 0;
-                }
-            }
-        }
+    let completePath = compareHexs(hexPath);
+    if (completePath) {
+        hexBreakAnimationTime = hexBreakAnimationTimeMax;
+        hexBreakAnimationTimeMaxPerHex = hexBreakAnimationTimeMax / hexPath.length;
+        hexBreakAnimationTimePerHex = 0;
+        hexBreakAnimationTime += .1;
+        pathIndicator.clear();
+    }else{
+        hexPath = [];
     }
+    // if (completePath) {
+    //     scanBoardForFallableHexes();
+    // }
     dragStartHex = null;
-    hexPath = [];
     mouseHeldDown = false;
+}
+
+function scanBoardForFallableHexes() {
+    let hexIsFallable = false;
+    for (let i = hexArray.length - 1; i >= 0; i--) {
+        hexArray[i].checkIfFallable();
+        if (hexArray[i].falling)
+            hexIsFallable = true;
+    }
+    return hexIsFallable;
+}
+
+function getScreenSpaceX(x) {
+    return hexGridDisplayX + x * (hexRadius * 1);
+}
+
+function getScreenSpaceY(y) {
+    return hexGridDisplayY + y * (hexRadius * 1.6);
 }
 
 //event for key press downward

@@ -61,12 +61,12 @@ function average(a, b) {
 }
 
 //converts an amount of seconds into a string of MM:SS.ZZZ (Z = milliseconds)
-function secondsToTimeString(seconds){
+function secondsToTimeString(seconds) {
     //clamp to 99 minutes and 59 seconds
     seconds = clamp(seconds, 0, 5549.999);
     //use javascript date to parse our seconds value as time
     let date = new Date(null);
-    date.setSeconds(seconds, (seconds - parseInt(seconds))*1000);
+    date.setSeconds(seconds, (seconds - parseInt(seconds)) * 1000);
     //limit it to just the minutes, seconds, and milliseconds
     let timeString = date.toISOString().substr(14, 9);
     //return the result
@@ -89,12 +89,12 @@ function rgbToHex(red = 0, green = 0, blue = 0) {
     return "0x" + redHex + greenHex + blueHex;
 };
 
-function hexToRed(red){
+function hexToRed(red) {
     return parseInt(red, 16);
 }
 
-function multiplyColorsConvertToHex(redA, greenA, blueA, redB, greenB, blueB){
-    let r = redA * (redB/255);
+function multiplyColorsConvertToHex(redA, greenA, blueA, redB, greenB, blueB) {
+    let r = redA * (redB / 255);
     let g = greenA * (greenB / 255);
     let b = blueA * (blueB / 255);
     return rgbToHex(r, g, b);
@@ -153,13 +153,13 @@ function compareHexs(hexPath) {
             console.log("broken");
         }
     }
-        
+
     for (let element of validPathChecker) {
         if (element == false || element == null) {
             console.log("false");
             return false;
         }
-        
+
     }
 
     console.log("true");
@@ -167,25 +167,25 @@ function compareHexs(hexPath) {
 }
 
 function giveHexValue(rotation, colorIndices) {
-    
+
     switch (rotation) {
-    case 0:
-        return [colorIndices[0], colorIndices[0], colorIndices[1], colorIndices[1], colorIndices[2], colorIndices[2]];
-    case 1:
-        return [colorIndices[2], colorIndices[0], colorIndices[0], colorIndices[1], colorIndices[1], colorIndices[2]];
-        
-    case 2:
-        return [colorIndices[2], colorIndices[2], colorIndices[0], colorIndices[0], colorIndices[1], colorIndices[1]];
-        
-    case 3:
-        return [colorIndices[1], colorIndices[2], colorIndices[2], colorIndices[0], colorIndices[0], colorIndices[1]];
-        
-    case 4:
-        return [colorIndices[1], colorIndices[1], colorIndices[2], colorIndices[2], colorIndices[0], colorIndices[0]];
-        
-    case 5:
-        return [colorIndices[0], colorIndices[1], colorIndices[1], colorIndices[2], colorIndices[2], colorIndices[0]];
+        case 0:
+            return [colorIndices[0], colorIndices[0], colorIndices[1], colorIndices[1], colorIndices[2], colorIndices[2]];
+        case 1:
+            return [colorIndices[2], colorIndices[0], colorIndices[0], colorIndices[1], colorIndices[1], colorIndices[2]];
+
+        case 2:
+            return [colorIndices[2], colorIndices[2], colorIndices[0], colorIndices[0], colorIndices[1], colorIndices[1]];
+
+        case 3:
+            return [colorIndices[1], colorIndices[2], colorIndices[2], colorIndices[0], colorIndices[0], colorIndices[1]];
+
+        case 4:
+            return [colorIndices[1], colorIndices[1], colorIndices[2], colorIndices[2], colorIndices[0], colorIndices[0]];
+
+        case 5:
+            return [colorIndices[0], colorIndices[1], colorIndices[1], colorIndices[2], colorIndices[2], colorIndices[0]];
     }
-    
+
 }
 
