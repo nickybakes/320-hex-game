@@ -44,6 +44,9 @@ let highlightedHex;
 let dragStartHex;
 let pathIndicator;
 
+//true if we should visually connect the white line to the start of the hex path
+let connectPathToStart;
+
 let hexGridDisplayX = 100;
 let hexGridDisplayY = 100;
 

@@ -212,7 +212,12 @@ class Hexagon extends PIXI.Graphics {
                 if (Math.abs(hexPath[hexPath.length - 1].posX - this.posX) <= 2 && Math.abs(hexPath[hexPath.length - 1].posY - this.posY) <= 1) {
                     hexPath.push(this);
                 }
-            } else {
+            } else if (this == dragStartHex && hexPath.length > 2 && compareHexes(hexPath)) {
+                //if we drag back onto the starting hex, and its a complete path,
+                //then "connect" the path line to itself
+                connectPathToStart = true;
+            }
+            else {
                 //if it already is in the path, than truncate the path down to where this hex is
                 hexPath.length = indexOfHexInPath + 1;
             }
@@ -223,6 +228,10 @@ class Hexagon extends PIXI.Graphics {
         highlightedHex = null;
         this.highlighted = false;
         e.currentTarget.alpha = 1.0;
+
+        if (this == dragStartHex) {
+            connectPathToStart = false;
+        }
     }
 
 
@@ -329,13 +338,24 @@ class PathIndicator extends PIXI.Graphics {
             this.moveTo(hexPath[i].x, hexPath[i].y)
                 .lineTo(hexPath[i + 1].x, hexPath[i + 1].y);
         }
-        if (dragStartHex != null && highlightedHex == dragStartHex) {
+        if (dragStartHex != null && highlightedHex == dragStartHex && hexPath.length == 1) {
             this.moveTo(dragStartHex.x, dragStartHex.y);
             this.lineTo(mousePosition.x, mousePosition.y);
         }
-        else if (dragStartHex != null) {
+        else if (!connectPathToStart && dragStartHex != null) {
             this.moveTo(hexPath[hexPath.length - 1].x, hexPath[hexPath.length - 1].y);
             this.lineTo(mousePosition.x, mousePosition.y);
+        }
+        else if (connectPathToStart && dragStartHex != null) {
+            for (let i = 0; i < 8; i += 3) {
+                let x1 = lerp(hexPath[hexPath.length - 1].x, dragStartHex.x, i / 8);
+                let y1 = lerp(hexPath[hexPath.length - 1].y, dragStartHex.y, i / 8);
+                let x2 = lerp(hexPath[hexPath.length - 1].x, dragStartHex.x, (i + 1) / 8);
+                let y2 = lerp(hexPath[hexPath.length - 1].y, dragStartHex.y, (i + 1) / 8);
+
+                this.moveTo(x1, y1);
+                this.lineTo(x2, y2);
+            }
         }
         this.endFill();
     }
@@ -416,8 +436,8 @@ class WrongMoveIndicator extends PIXI.Graphics {
         this.endFill();
     }
 
-    update(){
-        if(this.currentBlinkTime > 0){
+    update() {
+        if (this.currentBlinkTime > 0) {
             this.currentBlinkTime -= frameTime;
             this.alpha = Math.sin(rad(180 * (this.currentBlinkTime / this.currentBlinkTimeMax)));
         }
@@ -478,7 +498,7 @@ class HexBreakParticleSystem extends PIXI.Graphics {
         }
     }
 
-    update(){
+    update() {
         this.currentLifeTime -= frameTime;
         for (let i = 0; i < this.brokenPieces.length; i++) {
             let brokenPiece = this.brokenPieces[i];
