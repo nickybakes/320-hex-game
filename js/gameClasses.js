@@ -12,6 +12,9 @@ class Hexagon extends PIXI.Graphics {
     //how many stepped rotations this hex is currently rotated by, counter clockwise
     rotationValue;
 
+    //CCW = increase rotation value by 1
+    //CW = decrease rotation value by 1
+
     //how many stepped rotations this hex SHOULD be rotated by, counter clockwise
     wantedRotationValue;
 
@@ -78,7 +81,7 @@ class Hexagon extends PIXI.Graphics {
         this.colorIndices = [Math.trunc(Math.random() * 6), Math.trunc(Math.random() * 6), Math.trunc(Math.random() * 6)];
 
         //This part assigns hexagonValues a value
-        this.hexagonValues = giveHexValue(this.rotationValue, this.colorIndices);
+        this.hexagonValues = [this.colorIndices[0], this.colorIndices[0], this.colorIndices[1], this.colorIndices[1], this.colorIndices[2], this.colorIndices[2]];
 
         this.clear();
         this.drawHex();
@@ -140,8 +143,8 @@ class Hexagon extends PIXI.Graphics {
             this.rotationValue = moveIntoRange(this.rotationValue, 0, 6);
             this.wantedRotationValue = this.rotationValue;
 
-            this.hexagonValues.unshift(this.hexagonValues[this.hexagonValues.length - 1]);
-            this.hexagonValues.pop();
+            // this.hexagonValues.unshift(this.hexagonValues[this.hexagonValues.length - 1]);
+            // this.hexagonValues.pop();
 
             this.clear();
             this.drawHex();
@@ -153,8 +156,8 @@ class Hexagon extends PIXI.Graphics {
             this.rotationValue = moveIntoRange(this.rotationValue, 0, 6);
             this.wantedRotationValue = this.rotationValue;
 
-            this.hexagonValues.push(this.hexagonValues[0]);
-            this.hexagonValues.shift();
+            // this.hexagonValues.push(this.hexagonValues[0]);
+            // this.hexagonValues.shift();
 
             this.clear();
             this.drawHex();
@@ -338,6 +341,97 @@ class PathIndicator extends PIXI.Graphics {
     }
 }
 
+//Draws a big pink X that blinks for a small bit
+class WrongMoveIndicator extends PIXI.Graphics {
+    currentBlinkTime;
+
+    currentBlinkTimeMax = .25;
+
+    currentBlinkAmount;
+
+    currentBlinkAmountMax = 3;
+
+    radius = 35;
+
+    //inits this hexagon and stores its values
+    constructor() {
+        super();
+        this.x = 0;
+        this.y = 0;
+        this.interactive = false;
+        this.buttonMode = false;
+        this.currentBlinkAmount = this.currentBlinkAmountMax;
+        this.alpha = 0;
+
+        //draws white outline
+        this.beginFill();
+        this.lineStyle({
+            width: 47,
+            color: 0xffffff,
+            join: 'round',
+            cap: 'round'
+        });
+        this.moveTo(-this.radius, -this.radius)
+            .lineTo(this.radius, this.radius);
+        this.moveTo(this.radius, -this.radius)
+            .lineTo(-this.radius, this.radius);
+
+        //draws black outline
+        this.beginFill();
+        this.lineStyle({
+            width: 42,
+            color: 0x000000,
+            join: 'round',
+            cap: 'round'
+        });
+        this.moveTo(-this.radius, -this.radius)
+            .lineTo(this.radius, this.radius);
+        this.moveTo(this.radius, -this.radius)
+            .lineTo(-this.radius, this.radius);
+
+        //draws dark pink outline
+        this.lineStyle({
+            width: 29,
+            color: 0xa80030,
+            join: 'round',
+            cap: 'round'
+        });
+        this.moveTo(-this.radius, -this.radius)
+            .lineTo(this.radius, this.radius);
+        this.moveTo(this.radius, -this.radius)
+            .lineTo(-this.radius, this.radius);
+
+        //draws pink X shape
+        this.lineStyle({
+            width: 15,
+            color: 0xff0048,
+            join: 'round',
+            cap: 'round'
+        });
+        this.moveTo(-this.radius, -this.radius)
+            .lineTo(this.radius, this.radius);
+        this.moveTo(this.radius, -this.radius)
+            .lineTo(-this.radius, this.radius);
+
+        this.endFill();
+    }
+
+    update(){
+        if(this.currentBlinkTime > 0){
+            this.currentBlinkTime -= frameTime;
+            this.alpha = Math.sin(rad(180 * (this.currentBlinkTime / this.currentBlinkTimeMax)));
+        }
+
+        if (this.currentBlinkTime <= 0) {
+            this.currentBlinkAmount++;
+            this.currentBlinkTime = this.currentBlinkTimeMax;
+        }
+    }
+
+    drawMarker() {
+
+    }
+}
 
 //A system that draws and moves polygons when a hex is broken so it
 //looks like it visually exploded

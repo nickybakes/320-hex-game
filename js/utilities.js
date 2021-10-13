@@ -107,85 +107,129 @@ function blendColorsConvertToHex(redA, greenA, blueA, redB, greenB, blueB, alpha
     return rgbToHex(r, g, b);
 }
 
-//Compares the tile values of each hexagon in the line to see if they all match up 
-//I am to stupid to make this a switch statement, if someone smarter than me could do that, that would be gretaly appreciated
-function compareHexs(hexPath) {
-    validPathChecker = [null];
+//checks the Path of hexes the player made
+function compareHexes(hexPath) {
+    let positionDifferences = [
+        { x: 1, y: 1 }, { x: 2, y: 0 }, { x: 1, y: -1 }, { x: -1, y: -1 }, { x: -2, y: 0 }, { x: -1, y: 1 }
+    ];
+
+    if (hexPath.length <= 1)
+        return false;
 
     for (let i = 0; i < hexPath.length - 1; i++) {
-        if (hexPath[i].posX > hexPath[i + 1].posX && hexPath[i].posY == hexPath[i + 1].posY) {
-            if (hexPath[i].hexagonValues[4] == hexPath[i + 1].hexagonValues[1]) {
-                validPathChecker[i] = true;
-            } else {
-                validPathChecker[i] = false;
+        let startIndexHexCurrent = moveIntoRange(hexPath[i].wantedRotationValue, 0, 6);
+        let startIndexHexNext = moveIntoRange(hexPath[i + 1].wantedRotationValue, 0, 6);
+        for(let j = 0; j < 6; j++){
+            if (hexPath[i + 1].posX - hexPath[i].posX == positionDifferences[j].x && hexPath[i + 1].posY - hexPath[i].posY == positionDifferences[j].y){
+                //j represents the index of the segment of the FIRST (current) hex we want to compare to with the next one
+                //j + 3 (but moved into range 0 - 6 not including 6) represents the segment we want to use on the NEXT hex in the path
+                //we add j to both of the hexes' "startIndex" which is based on its rotational value, so that we are checking
+                //the segment after rotating, with out having to physically shift the data in the arrays (which is prone to cause bugs)
+
+                //NOTE: j also represents the direction the path is moving between 2 hexes (which is why we know which segments need to be compared,
+                //for example if the path is going down right (j = 5), then we have to compare bottom left segment of top hex and top right segment of bottom hex).
+
+                //Knowing that j represents the direction of the path, we can use it to find shapes drawn within the path, maybe add j to a list and for every
+                //hex we check, we see if the list of j's (directions) is the same needed for a shape. If one j breaks the shape, then we clea rthat list and start again
+
+                //if the 2 segments dont match, then we return false!
+                if (hexPath[i].hexagonValues[moveIntoRange(j - startIndexHexCurrent, 0, 6)] != hexPath[i + 1].hexagonValues[moveIntoRange(j - startIndexHexNext + 3, 0, 6)]){
+                    wrongMovePositionAndDirection = {
+                        posX: hexPath[i].posX,
+                        posY: hexPath[i].posY,
+                        directionX: positionDifferences[j].x,
+                        directionY: positionDifferences[j].y
+                    };
+                    return false;
+                }
             }
-        } else if (hexPath[i].posX < hexPath[i + 1].posX && hexPath[i].posY == hexPath[i + 1].posY) {
-            if (hexPath[i].hexagonValues[1] == hexPath[i + 1].hexagonValues[4]) {
-                validPathChecker[i] = true;
-            } else {
-                validPathChecker[i] = false;
-            }
-        } else if (hexPath[i].posX > hexPath[i + 1].posX && hexPath[i].posY > hexPath[i + 1].posY) {
-            if (hexPath[i].hexagonValues[3] == hexPath[i + 1].hexagonValues[0]) {
-                validPathChecker[i] = true;
-            } else {
-                validPathChecker[i] = false;
-            }
-        } else if (hexPath[i].posX < hexPath[i + 1].posX && hexPath[i].posY < hexPath[i + 1].posY) {
-            if (hexPath[i].hexagonValues[0] == hexPath[i + 1].hexagonValues[3]) {
-                validPathChecker[i] = true;
-            } else {
-                validPathChecker[i] = false;
-            }
-        } else if (hexPath[i].posX > hexPath[i + 1].posX && hexPath[i].posY < hexPath[i + 1].posY) {
-            if (hexPath[i].hexagonValues[5] == hexPath[i + 1].hexagonValues[2]) {
-                validPathChecker[i] = true;
-            } else {
-                validPathChecker[i] = false;
-            }
-        } else if (hexPath[i].posX < hexPath[i + 1].posX && hexPath[i].posY > hexPath[i + 1].posY) {
-            if (hexPath[i].hexagonValues[2] == hexPath[i + 1].hexagonValues[5]) {
-                validPathChecker[i] = true;
-            } else {
-                validPathChecker[i] = false;
-            }
-        } else {
-            console.log("broken");
         }
     }
-
-    for (let element of validPathChecker) {
-        if (element == false || element == null) {
-            console.log("false");
-            return false;
-        }
-
-    }
-
-    console.log("true");
+    //if no "non matches" were found in the path, then the path must be good, and we can return True!
     return true;
 }
 
-function giveHexValue(rotation, colorIndices) {
+//old code
+{
+//Compares the tile values of each hexagon in the line to see if they all match up 
+//I am to stupid to make this a switch statement, if someone smarter than me could do that, that would be gretaly appreciated
+// function compareHexs(hexPath) {
+//     validPathChecker = [null];
 
-    switch (rotation) {
-        case 0:
-            return [colorIndices[0], colorIndices[0], colorIndices[1], colorIndices[1], colorIndices[2], colorIndices[2]];
-        case 1:
-            return [colorIndices[2], colorIndices[0], colorIndices[0], colorIndices[1], colorIndices[1], colorIndices[2]];
+//     for (let i = 0; i < hexPath.length - 1; i++) {
+//         if (hexPath[i].posX > hexPath[i + 1].posX && hexPath[i].posY == hexPath[i + 1].posY) {
+//             if (hexPath[i].hexagonValues[4] == hexPath[i + 1].hexagonValues[1]) {
+//                 validPathChecker[i] = true;
+//             } else {
+//                 validPathChecker[i] = false;
+//             }
+//         } else if (hexPath[i].posX < hexPath[i + 1].posX && hexPath[i].posY == hexPath[i + 1].posY) {
+//             if (hexPath[i].hexagonValues[1] == hexPath[i + 1].hexagonValues[4]) {
+//                 validPathChecker[i] = true;
+//             } else {
+//                 validPathChecker[i] = false;
+//             }
+//         } else if (hexPath[i].posX > hexPath[i + 1].posX && hexPath[i].posY > hexPath[i + 1].posY) {
+//             if (hexPath[i].hexagonValues[3] == hexPath[i + 1].hexagonValues[0]) {
+//                 validPathChecker[i] = true;
+//             } else {
+//                 validPathChecker[i] = false;
+//             }
+//         } else if (hexPath[i].posX < hexPath[i + 1].posX && hexPath[i].posY < hexPath[i + 1].posY) {
+//             if (hexPath[i].hexagonValues[0] == hexPath[i + 1].hexagonValues[3]) {
+//                 validPathChecker[i] = true;
+//             } else {
+//                 validPathChecker[i] = false;
+//             }
+//         } else if (hexPath[i].posX > hexPath[i + 1].posX && hexPath[i].posY < hexPath[i + 1].posY) {
+//             if (hexPath[i].hexagonValues[5] == hexPath[i + 1].hexagonValues[2]) {
+//                 validPathChecker[i] = true;
+//             } else {
+//                 validPathChecker[i] = false;
+//             }
+//         } else if (hexPath[i].posX < hexPath[i + 1].posX && hexPath[i].posY > hexPath[i + 1].posY) {
+//             if (hexPath[i].hexagonValues[2] == hexPath[i + 1].hexagonValues[5]) {
+//                 validPathChecker[i] = true;
+//             } else {
+//                 validPathChecker[i] = false;
+//             }
+//         } else {
+//             console.log("broken");
+//         }
+//     }
 
-        case 2:
-            return [colorIndices[2], colorIndices[2], colorIndices[0], colorIndices[0], colorIndices[1], colorIndices[1]];
+//     for (let element of validPathChecker) {
+//         if (element == false || element == null) {
+//             console.log("false");
+//             return false;
+//         }
 
-        case 3:
-            return [colorIndices[1], colorIndices[2], colorIndices[2], colorIndices[0], colorIndices[0], colorIndices[1]];
+//     }
 
-        case 4:
-            return [colorIndices[1], colorIndices[1], colorIndices[2], colorIndices[2], colorIndices[0], colorIndices[0]];
+//     console.log("true");
+//     return true;
+// }
 
-        case 5:
-            return [colorIndices[0], colorIndices[1], colorIndices[1], colorIndices[2], colorIndices[2], colorIndices[0]];
-    }
+// function giveHexValue(rotation, colorIndices) {
 
+//     switch (rotation) {
+//         case 0:
+//             return [colorIndices[0], colorIndices[0], colorIndices[1], colorIndices[1], colorIndices[2], colorIndices[2]];
+//         case 1:
+//             return [colorIndices[2], colorIndices[0], colorIndices[0], colorIndices[1], colorIndices[1], colorIndices[2]];
+
+//         case 2:
+//             return [colorIndices[2], colorIndices[2], colorIndices[0], colorIndices[0], colorIndices[1], colorIndices[1]];
+
+//         case 3:
+//             return [colorIndices[1], colorIndices[2], colorIndices[2], colorIndices[0], colorIndices[0], colorIndices[1]];
+
+//         case 4:
+//             return [colorIndices[1], colorIndices[1], colorIndices[2], colorIndices[2], colorIndices[0], colorIndices[0]];
+
+//         case 5:
+//             return [colorIndices[0], colorIndices[1], colorIndices[1], colorIndices[2], colorIndices[2], colorIndices[0]];
+//     }
+
+// }
 }
-

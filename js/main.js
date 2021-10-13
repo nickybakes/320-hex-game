@@ -62,6 +62,9 @@ let hexBreakAnimationTimeMaxPerHex;
 
 let hexBreakParticles = [];
 
+let wrongMoveIndicator;
+let wrongMovePositionAndDirection;
+
 //the amount of hexes waiting above row 0 in each column, 
 //waiting to be dropped into the playable board
 let columnWaitAmount = [];
@@ -124,6 +127,9 @@ function setUpGame() {
     displacementFilter = new PIXI.filters.DisplacementFilter(displacementSprite);
 
     gameScene.addChild(displacementSprite);
+
+    wrongMoveIndicator = new WrongMoveIndicator();
+    gameScene.addChild(wrongMoveIndicator);
 
     // events for drag end
     // app.stage.on('pointerup', onDragEnd);
@@ -199,6 +205,10 @@ function updateLoop() {
     //get our mouse position
     mousePosition = app.renderer.plugins.interaction.mouse.global;
 
+    if(wrongMoveIndicator.currentBlinkAmount < wrongMoveIndicator.currentBlinkAmountMax){
+        wrongMoveIndicator.update();
+    }
+
     //update all the hex particle systems
     for (let i = 0; i < hexBreakParticles.length; i++) {
         hexBreakParticles[i].update();
@@ -246,9 +256,9 @@ function updateLoop() {
     }
 
     //DEBUG, prints hex info
-    if (highlightedHex != null && keysHeld["87"]) {
+    if (highlightedHex != null && !keysHeld["87"] && keysReleased["87"]) {
         console.log(highlightedHex.hexagonValues);
-        console.log(highlightedHex.rotationValue);
+        console.log("x: " + highlightedHex.posX + ", y: " + highlightedHex.posY);
         console.log(highlightedHex.wantedRotationValue);
     }
 
@@ -346,7 +356,7 @@ function onDragEnd(e) {
         return;
 
     console.log("Drag End (for whole window)");
-    let completePath = compareHexs(hexPath);
+    let completePath = compareHexes(hexPath);
     if (completePath) {
         //start the hex breaking animation
         hexBreakAnimationTime = hexBreakAnimationTimeMax;
@@ -365,6 +375,13 @@ function onDragEnd(e) {
 
         pathIndicator.clear();
     } else {
+        //if the path is wrong in any way
+        if(hexPath.length > 1){
+            wrongMoveIndicator.x = getScreenSpaceX(wrongMovePositionAndDirection.posX + (wrongMovePositionAndDirection.directionX / 2));
+            wrongMoveIndicator.y = getScreenSpaceY(wrongMovePositionAndDirection.posY + (wrongMovePositionAndDirection.directionY / 2));
+            wrongMoveIndicator.currentBlinkAmount = 0;
+            wrongMoveIndicator.currentBlinkTime = wrongMoveIndicator.currentBlinkTimeMax;
+        }
         hexPath = [];
     }
     dragStartHex = null;
