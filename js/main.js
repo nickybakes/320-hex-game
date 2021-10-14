@@ -74,6 +74,7 @@ let columnWaitAmount = [];
 
 let displacementSprite;
 let displacementFilter;
+let bloomFilter;
 
 
 //objects that store the states of user's input/controls
@@ -94,6 +95,10 @@ function setUpGame() {
 
     //init our HUD containers for different game states
     gameScene = new PIXI.Container();
+
+    bloomFilter = new PIXI.filters.AdvancedBloomFilter();
+    bloomFilter.quality = 10;
+    bloomFilter.bloomScale = .5;
 
     hexPath = [];
     //set up our scenes/containers
@@ -123,6 +128,8 @@ function setUpGame() {
 
     pathIndicator = new PathIndicator();
     gameScene.addChild(pathIndicator);
+
+    gameScene.filters = [bloomFilter];
 
     displacementSprite = PIXI.Sprite.from('media/displacement-map-tiling.jpg');
     // Make sure the sprite is wrapping.

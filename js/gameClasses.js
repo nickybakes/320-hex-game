@@ -490,11 +490,14 @@ class HexBreakParticleSystem extends PIXI.Graphics {
                 velX: Math.trunc((Math.random() - .5) * 600 * 2),
                 velY: Math.trunc((Math.random() - .2) * -600 * 2),
                 colorIndex: colorIndices[Math.trunc(Math.random() * 3)],
-                brightness: Math.trunc((Math.random() - .5) * 50 * 2),
+                brightness: Math.trunc((Math.random() - .5) * 30 * 2),
+                flashChance: Math.random(),
                 rotationDegrees: Math.trunc(clamp(Math.random(), .2, .8) * 360),
                 radius: Math.trunc(clamp(Math.random(), .4, 1) * 24),
-                rotationalVelocity: Math.trunc((Math.random() - .5) * 1100 * 2)
+                rotationalVelocity: Math.trunc((Math.random() - .5) * 1100 * 2),
+                brightnessFlashSpeed: 0
             });
+            this.brokenPieces[i].brightnessFlashSpeed = Math.trunc(clamp(Math.random(), .8, 1) * this.brokenPieces[i].rotationalVelocity * 2);
         }
     }
 
@@ -507,6 +510,14 @@ class HexBreakParticleSystem extends PIXI.Graphics {
 
             brokenPiece.x += brokenPiece.velX * frameTime;
             brokenPiece.y += brokenPiece.velY * frameTime;
+
+            if (brokenPiece.brightness >= 150 || brokenPiece.brightness <= -150){
+                brokenPiece.brightness = clamp(brokenPiece.brightness, -148, 148);
+                brokenPiece.brightnessFlashSpeed = -brokenPiece.brightnessFlashSpeed;
+            }
+
+            if (brokenPiece.flashChance > .6)
+                brokenPiece.brightness += brokenPiece.brightnessFlashSpeed * frameTime;
 
             brokenPiece.rotationDegrees += brokenPiece.rotationalVelocity * frameTime;
         }
