@@ -50,6 +50,19 @@ let hexGridDisplayY = 100;
 let rotationCoolDown;
 let rotationCoolDownMax = .2;
 
+// timer variables
+let startTimeInSec = 30;
+let currentTimeInSec = startTimeInSec;
+let gameStarted = false;
+let timeTracker = new PIXI.Text('timer', {fill: 0xffffff});
+timeTracker.x = 900;
+
+let score = 0;
+let scoreString = 'score: ';
+let scoreTracker = new PIXI.Text('score: ' + score, {fill: 0xffffff});
+//timeTracker.x = 800;
+//timeTracker.y = 200;
+
 //time during falling animation of hexes falling 1 row,
 //set to -1 if no longer falling at all
 let hexFallAnimationTime;
@@ -71,7 +84,6 @@ let columnWaitAmount = [];
 
 let displacementSprite;
 let displacementFilter;
-
 
 //objects that store the states of user's input/controls
 let mousePosition;
@@ -114,6 +126,7 @@ function setUpGame() {
         }
     }
 
+    // for falling
     for (let i = 0; i < hexGridWidth / 2; i++) {
         columnWaitAmount.push(0);
     }
@@ -121,6 +134,7 @@ function setUpGame() {
     pathIndicator = new PathIndicator();
     gameScene.addChild(pathIndicator);
 
+    // animates white line
     displacementSprite = PIXI.Sprite.from('media/displacement-map-tiling.jpg');
     // Make sure the sprite is wrapping.
     displacementSprite.texture.baseTexture.wrapMode = PIXI.WRAP_MODES.REPEAT;
@@ -130,6 +144,9 @@ function setUpGame() {
 
     wrongMoveIndicator = new WrongMoveIndicator();
     gameScene.addChild(wrongMoveIndicator);
+
+    gameScene.addChild(timeTracker);
+    gameScene.addChild(scoreTracker);
 
     // events for drag end
     // app.stage.on('pointerup', onDragEnd);
@@ -304,6 +321,16 @@ function updateLoop() {
         }
     }
 
+    // change to only decrease on first click
+    if(gameStarted){
+        currentTimeInSec -= dt;
+        if(currentTimeInSec <= 0){
+            currentTimeInSec = 0;
+            // END GAME
+        }
+    }
+    timeTracker.text = secondsToTimeString(currentTimeInSec);
+
     //reset our controls for next frame
     keysReleased = [];
 }
@@ -352,6 +379,8 @@ function breakHex(hex) {
 
 //when  the user stops dragging the handle
 function onDragEnd(e) {
+    gameStarted = true;
+
     if (hexFallAnimationTime > 0 || hexBreakAnimationTime > 0)
         return;
 
@@ -372,6 +401,12 @@ function onDragEnd(e) {
 
         hexBreakAnimationTimePerHex = 0;
         hexBreakAnimationTime += .1;
+
+        // score and timer
+        score += hexPath.length;
+        scoreTracker.text = scoreString + score;
+
+        currentTimeInSec += hexPath.length; // currently add one sec for each hex
 
         pathIndicator.clear();
     } else {
