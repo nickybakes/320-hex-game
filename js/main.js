@@ -81,18 +81,27 @@ let keysHeld = [];
 let keysReleased = [];
 
 //once finished, call the setUpGame function
+app.loader.onComplete.add(setupScenes);
 app.loader.onComplete.add(setUpTitle);
 app.loader.onComplete.add(setUpGame);
 app.loader.load();
+
+function setupScenes() {
+    //init our HUD containers for different game states
+    titleScene = new PIXI.Container();
+    howToPlayScene = new PIXI.Container();
+    gameScene = new PIXI.Container();
+    endGameScene = new PIXI.Container();
+
+    //store our scenes for easy access later
+    scenes = [titleScene, howToPlayScene, gameScene, endGameScene];
+}
 
 // Initialization for the Title screen
 function setUpTitle() {
     //add our window keyboard listener
     window.addEventListener("keydown", keysDown);
     window.addEventListener("keyup", keysUp);
-
-    //init our HUD containers for different game states
-    titleScene = new PIXI.Container();
 
     let buttonStyle = new PIXI.TextStyle({
         fill: 0x73fffd,
@@ -102,11 +111,8 @@ function setUpTitle() {
         strokeThickness: 3
     });
 
-    let playButton = createButton("Play", 120, 120, console.log("here"), buttonStyle);
+    let playButton = createButton("Play", 120, 120, setGameState(2), buttonStyle);
     titleScene.addChild(playButton);
-
-    //store our scenes for easy access later
-    scenes = [titleScene, howToPlayScene, gameScene, endGameScene];
 
     app.stage.addChild(titleScene);
 
@@ -119,9 +125,6 @@ function setUpGame() {
     //add our window keyboard listener
     window.addEventListener("keydown", keysDown);
     window.addEventListener("keyup", keysUp);
-
-    //init our HUD containers for different game states
-    gameScene = new PIXI.Container();
 
     hexPath = [];
     //set up our scenes/containers
@@ -174,7 +177,7 @@ function setUpGame() {
     app.stage.addChild(gameScene);
 
     //our game state starts at 0 (title screen)
-    //setGameState(0);
+    setGameState(0);
 
     //finally, run our update loop!
     app.ticker.add(updateLoop);
@@ -190,6 +193,7 @@ function setGameState(state) {
 
     //store our new state
     gameState = state;
+    console.log(scenes);
 
     //hide all HUD containers
     for (let scene of scenes) {
