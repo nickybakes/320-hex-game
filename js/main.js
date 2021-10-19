@@ -20,13 +20,14 @@ let stage;
 let titleScene;
 let howToPlayScene;
 let gameScene;
+let endGameScene;
 let scenes = [];
 
 //the state the game is currently in. defines behavior and sounds at that time
-let gameState = 0;
-//0 - title screen;
-//1 - how to play
-//2 - gameplay
+let titleState = 0;
+let howToPlayState = 1;
+let gameState = 2;
+let endGameState = 3;
 
 //Key names for local storage
 const prefix = "nmb9745-";
@@ -80,8 +81,38 @@ let keysHeld = [];
 let keysReleased = [];
 
 //once finished, call the setUpGame function
+app.loader.onComplete.add(setUpTitle);
 app.loader.onComplete.add(setUpGame);
 app.loader.load();
+
+// Initialization for the Title screen
+function setUpTitle() {
+    //add our window keyboard listener
+    window.addEventListener("keydown", keysDown);
+    window.addEventListener("keyup", keysUp);
+
+    //init our HUD containers for different game states
+    titleScene = new PIXI.Container();
+
+    let buttonStyle = new PIXI.TextStyle({
+        fill: 0x73fffd,
+        fontSize: 48,
+        fontFamily: "Amaranth",
+        stroke: 0x000000,
+        strokeThickness: 3
+    });
+
+    let playButton = createButton("Play", 120, 120, console.log("here"), buttonStyle);
+    titleScene.addChild(playButton);
+
+    //store our scenes for easy access later
+    scenes = [titleScene, howToPlayScene, gameScene, endGameScene];
+
+    app.stage.addChild(titleScene);
+
+    //finally, run our update loop!
+    app.ticker.add(updateLoop);
+}
 
 //initializes all the objects needed to run the game from the title screen
 function setUpGame() {
@@ -140,9 +171,6 @@ function setUpGame() {
     displacementFilter.scale.x = 17;
     displacementFilter.scale.y = 17;
 
-    //store our scenes for easy access later
-    scenes = [titleScene, howToPlayScene, gameScene];
-
     app.stage.addChild(gameScene);
 
     //our game state starts at 0 (title screen)
@@ -158,13 +186,14 @@ function setGameState(state) {
     //0 - title screen;
     //1 - how to play
     //2 - game
+    //3 - endgame
 
     //store our new state
     gameState = state;
 
     //hide all HUD containers
-    for (let i = 0; i < scenes.length; i++) {
-        scenes[i].visible = false;
+    for (let scene of scenes) {
+        scene.visible = false;
     }
     //and unhide the one for the state we are switching to
     scenes[state].visible = true;
@@ -184,11 +213,11 @@ function createButton(text, x, y, func, style = buttonStyle) {
     button.interactive = true;
     button.buttonMode = true;
     //when the user clicks down, set our selected button to this one
-    button.on('pointerdown', function (e) { selectedButton = button });
-    //when the user releases the click; if this is the same button their clicked down on, then call its function and play a sound!
-    button.on('pointerup', function (e) { if (button == selectedButton) { func(); buttonClickSound.play(); } });
-    //if the user hovers over the button, change alpha and play a sound
-    button.on('pointerover', function (e) { buttonHoverSound.play(); e.target.alpha = 0.7; });
+    // button.on('pointerdown', function (e) { selectedButton = button });
+    //when the user releases the click; if this is the same button their clicked down on, then call its function!
+    button.on('pointerup', function (e) { func(); });
+    //if the user hovers over the button, change alpha
+    button.on('pointerover', function (e) { e.target.alpha = 0.7; });
     //if the user unhovers this button, return alpha back to normal
     button.on('pointerout', e => e.currentTarget.alpha = 1.0);
     return button;
