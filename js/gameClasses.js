@@ -79,6 +79,7 @@ class Hexagon extends PIXI.Graphics {
         this.colorIndices = [];
         this.hexagonValues = [];
         this.colorIndices = [Math.trunc(Math.random() * 6), Math.trunc(Math.random() * 6), Math.trunc(Math.random() * 6)];
+   
 
         //This part assigns hexagonValues a value
         this.hexagonValues = [this.colorIndices[0], this.colorIndices[0], this.colorIndices[1], this.colorIndices[1], this.colorIndices[2], this.colorIndices[2]];

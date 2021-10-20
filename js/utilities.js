@@ -149,87 +149,276 @@ function compareHexes(hexPath) {
     return true;
 }
 
-//old code
+//Figures out if a shape has been drawn by the player when they get a correct match
+function detectShape(hexPath) {
+    //copy path made by player
+    let relativePath = [];
+    startx = hexPath[0].posX
+    starty = hexPath[0].posY
+    for (let i = 0; i < hexPath.length - 1; i++) {
+        relativePath.push([hexPath[i + 1].posX - hexPath[i].posX, hexPath[i + 1].posY - hexPath[i].posY])
+    }
+    
+    //run it through all the possible shapes
+
+    //triangle destorys a random row
+    if (detectTriangle(relativePath)) {
+        let randomY = Math.floor(Math.random() * 6)
+        switch (randomY % 2) {
+        case 0:
+            for (let i = 0; i < 12; i += 2) {
+                hex = findHexAtPos(i, randomY)
+                if (hex != null) {
+                    breakHex(hex);
+                }
+            }
+            break;
+        case 1:
+            for (let i = 1; i < 12; i += 2) {
+                hex = findHexAtPos(i, randomY)
+                if (hex != null) {
+                    breakHex(hex);
+                }
+            }
+            
+        }
+        
+        
+    }
+
+    //lightning destroys 3 random tiles
+    if (detectLightning(relativePath)) {
+        for (let i = 0; i < 4; i++) {
+            let randomX = Math.floor(Math.random() * 12)
+            let randomY = Math.floor(Math.random() * 6)
+            hex = findHexAtPos(randomX, randomY)
+            while (hex == null) {
+                randomX = Math.floor(Math.random() * 12)
+                randomY = Math.floor(Math.random() * 6)
+                hex = findHexAtPos(randomX, randomY)
+            }
+            
+            breakHex(hex);
+        }
+    }
+
+    //W destroys a random row
+    if (detectW(relativePath)) {
+        let randomX = Math.floor(Math.random() * 12)
+        console.log(randomX);
+        for (let i = 0; i < 6; i++) {
+            hex = findHexAtPos(randomX, i)
+            if (hex != null) {
+                breakHex(hex);
+            }
+        }
+    }
+    
+    //Trapezoid does a cool diagonal thing along the sides (WIP)
+    if (detectTrapezoid(relativePath)) {
+        let maxLeft = hexPath[0].posX;
+        let maxRight = hexPath[0].posX;
+        let startY = hexPath[0].posY;
+        for (let i = 0; i < hexPath.length - 1; i++) {
+            if (hexPath[i].posX > maxRight) {
+                maxRight = hexPath[i].posX;
+            }
+            if (hexPath[i].posX < maxLeft) {
+                maxLeft = hexPath[i].posX;
+            }
+            if (hexPath[i].posY > startY) {
+                startY = hexPath[i].posY;
+            }
+        }
+        
+        let hexL = findHexAtPos(maxRight, startY);
+        let hexR = findHexAtPos(maxLeft, startY);
+        
+        for (let i = 1; i < 12; i++) {
+            
+            if (hexR != null) {
+                if (hexR.posX != 12) {
+                    hexR = findHexAtPos(maxRight + i, startY + i)
+                    if (hexR != null) {
+                        breakHex(hexR);
+                    }
+                }
+            }
+            if (hexL != null) {
+                if (hexL.posX != 0) {
+                    hexL = findHexAtPos(maxLeft - i, startY + i)
+                    if (hexL != null) {
+                        breakHex(hexL);
+                    }
+                }
+            }
+        }
+        
+    }
+    
+    //IDK what should happen
+    if(detectPentagram(relativePath))
+    {
+
+    }
+
+    //If you do the cool infinity thing destroy all tiles
+    if (detectInfinity(relativePath)) {
+        breakAllHexes();
+    }
+}
+
+//checks path made by player and sees if it follows any triangel patterns
+function detectTriangle(relativePath)
 {
-//Compares the tile values of each hexagon in the line to see if they all match up 
-//I am to stupid to make this a switch statement, if someone smarter than me could do that, that would be gretaly appreciated
-// function compareHexs(hexPath) {
-//     validPathChecker = [null];
+    let possibleTriangles = [
+        [[-1,1],[2,0]],
+        [[1,1],[-2,0]],  
+        [[1,-1],[1,1]],
+        [[2,0],[-1,-1]],
+        [[-1,-1],[-1,1]],
+        [[-2,0],[1,-1]],  
+        [[2,0],[-1,1]],   
+        [[-2,0],[1,1]],
+        [[-1,-1],[2,0]],
+        [[1,-1],[-2,0]],
+        [[1,1],[1,-1]],
+        [[-1,1],[-1,-1]],
+    ];
+   for(let i = 0; i < possibleTriangles.length; i++)
+   {
+    if(equalArray(relativePath,possibleTriangles[i]))
+    { 
+        return true;
+    }
+   }
+}
 
-//     for (let i = 0; i < hexPath.length - 1; i++) {
-//         if (hexPath[i].posX > hexPath[i + 1].posX && hexPath[i].posY == hexPath[i + 1].posY) {
-//             if (hexPath[i].hexagonValues[4] == hexPath[i + 1].hexagonValues[1]) {
-//                 validPathChecker[i] = true;
-//             } else {
-//                 validPathChecker[i] = false;
-//             }
-//         } else if (hexPath[i].posX < hexPath[i + 1].posX && hexPath[i].posY == hexPath[i + 1].posY) {
-//             if (hexPath[i].hexagonValues[1] == hexPath[i + 1].hexagonValues[4]) {
-//                 validPathChecker[i] = true;
-//             } else {
-//                 validPathChecker[i] = false;
-//             }
-//         } else if (hexPath[i].posX > hexPath[i + 1].posX && hexPath[i].posY > hexPath[i + 1].posY) {
-//             if (hexPath[i].hexagonValues[3] == hexPath[i + 1].hexagonValues[0]) {
-//                 validPathChecker[i] = true;
-//             } else {
-//                 validPathChecker[i] = false;
-//             }
-//         } else if (hexPath[i].posX < hexPath[i + 1].posX && hexPath[i].posY < hexPath[i + 1].posY) {
-//             if (hexPath[i].hexagonValues[0] == hexPath[i + 1].hexagonValues[3]) {
-//                 validPathChecker[i] = true;
-//             } else {
-//                 validPathChecker[i] = false;
-//             }
-//         } else if (hexPath[i].posX > hexPath[i + 1].posX && hexPath[i].posY < hexPath[i + 1].posY) {
-//             if (hexPath[i].hexagonValues[5] == hexPath[i + 1].hexagonValues[2]) {
-//                 validPathChecker[i] = true;
-//             } else {
-//                 validPathChecker[i] = false;
-//             }
-//         } else if (hexPath[i].posX < hexPath[i + 1].posX && hexPath[i].posY > hexPath[i + 1].posY) {
-//             if (hexPath[i].hexagonValues[2] == hexPath[i + 1].hexagonValues[5]) {
-//                 validPathChecker[i] = true;
-//             } else {
-//                 validPathChecker[i] = false;
-//             }
-//         } else {
-//             console.log("broken");
-//         }
-//     }
+//checks path made by player and sees if it follows any pentagram patterns
+function detectPentagram(relativePath)
+{
+    let possiblePentagram = [
+        [[-2, 0] , [-1, 1] , [1, 1] , [2, 0] , [1, -1]],
+        [[-1, 1] , [1, 1] , [2, 0] , [1, -1] , [-1, -1]],
+        [[1, 1] , [2, 0] , [1, -1] , [-1, -1] , [-2, 0]],
+        [[2, 0] , [1, -1] , [-1, -1] , [-2, 0] , [-1, 1]],
+        [[1, -1] , [-1, -1] , [-2, 0] , [-1, 1] , [1, 1]],
+        [[-1, -1] , [-2, 0] , [-1, 1] , [1, 1] , [2, 0]],
+        [[1, 1] , [-1, 1] , [-2, 0] , [-1, -1] , [1, -1]],
+        [[-1, 1] , [-2, 0] , [-1, -1] , [1, -1] , [2, 0]],
+        [[-2, 0] , [-1, -1] , [1, -1] , [2, 0] , [1, 1]],
+        [[-1, -1] , [1, -1] , [2, 0] , [1, 1] , [-1, 1]],
+        [[1, -1] , [2, 0] , [1, 1] , [-1, 1] , [-2, 0]],
+        [[2, 0] , [1, 1] , [-1, 1] , [-2, 0] , [-1, -1]]
+    ];
+   for(let i = 0; i < possiblePentagram.length; i++)
+   {
+    if(equalArray(relativePath,possiblePentagram[i]))
+    {
+        return true;
+    }
+   }
+}
 
-//     for (let element of validPathChecker) {
-//         if (element == false || element == null) {
-//             console.log("false");
-//             return false;
-//         }
+//checks path made by player and sees if it follows any lightning patterns
+function detectLightning(relativePath)
+{
+    let possibleLightning = [
+        [[-1, 1],[2, 0],[-1, 1]],
+        [[1, 1],[-2, 0],[1, 1]],
+        [[-1, -1],[2, 0],[-1, -1]],
+        [[1, -1],[-2, 0],[1, -1]]
+    ];
+    for(let i = 0; i < possibleLightning.length; i++)
+   {
+    if(equalArray(relativePath,possibleLightning[i]))
+    {
+       return true;
+    }
+   }
+}
 
-//     }
+//checks path made by player and sees if it follows any infinity patterns
+function detectInfinity(relativePath)
+{
+    let possibleInfinity = [
+        [[-2, 0] , [-1, 1] , [1, 1] , [2, 0] , [1, -1] , [1, -1] , [2, 0] , [1, 1] , [-1, 1] , [-2, 0]],
+        [[2, 0] , [1, -1] , [-1, -1] , [-2, 0] , [-1, 1] , [-1, 1] , [-2, 0] , [-1, -1] , [1, -1] , [2, 0]],
+        [[-2, 0] , [-1, -1] , [1, -1] , [2, 0] , [1, 1] , [1, 1] , [2, 0] , [1, -1] , [-1, -1] , [-2, 0]],
+        [[2, 0] , [1, 1] , [-1, 1] , [-2, 0] , [-1, -1] , [-1, -1] , [-2, 0] , [-1, 1] , [1, 1] , [2, 0]]
+    ];
+    for(let i = 0; i < possibleInfinity.length; i++)
+   {
+    if(equalArray(relativePath,possibleInfinity[i]))
+    {
+        return true;
+    }
+   }
+}
 
-//     console.log("true");
-//     return true;
-// }
+//checks path made by player and sees if it follows any W patterns
+function detectW(relativePath)
+{
+    let possibleW = [
+        [[1, 1],[1, -1],[1, 1],[1, -1]],
+        [[-1, 1],[-1, -1],[-1, 1],[-1, -1]]
+    ];
+    for(let i = 0; i < possibleW.length; i++)
+   {
+    if(equalArray(relativePath,possibleW[i]))
+    {
+        return true;
+    }
+   }
+}
 
-// function giveHexValue(rotation, colorIndices) {
+//checks path made by player and sees if it follows any trapezoid patterns
+function detectTrapezoid(relativePath)
+{
+    let possibleTrapezoid = [
+        [[-1, 1] , [2, 0] , [2, 0] , [-1, -1]],
+        [[2, 0] , [2, 0] , [-1, -1] , [-2, 0]],
+        [[2, 0] , [-1, -1] , [-2, 0] , [-1, 1]],
+        [[-1, -1] , [-2, 0] , [-1, 1] , [2, 0]],
+        [[-2, 0] , [-1, 1] , [2, 0] , [2, 0]],
+        [[2, 0] , [1, 1] , [-2, 0] , [-2, 0]],
+        [[1, 1] , [-2, 0] , [-2, 0] , [1, -1]],
+        [[-2, 0] , [1, -1] , [2, 0] , [1, 1]],
+        [[1, -1] , [2, 0] , [1, 1] , [-2, 0]],
+        [[-1, -1] , [2, 0] , [2, 0] , [-1, 1]],
+        [[2, 0] , [2, 0] , [-1, 1] , [-2, 0]],
+        [[2, 0] , [-1, 1] , [-2, 0] , [-1, -1]],
+        [[-1, 1] , [-2, 0] , [-1, -1] , [2, 0]],
+        [[-2, 0] , [-1, -1] , [2, 0] , [2, 0]],
+        [[2, 0] , [1, -1] , [-2, 0] , [-2, 0]],
+        [[1, -1] , [-2, 0] , [-2, 0] , [1, 1]],
+        [[-2, 0] , [-2, 0] , [1, 1] , [2, 0]],
+        [[-2, 0] , [1, 1] , [2, 0] , [1, -1]],
+        [[1, 1] , [2, 0] , [1, -1] , [-2, 0]]
+    ];
+    for(let i = 0; i < possibleTrapezoid.length; i++)
+   {
+    if(equalArray(relativePath,possibleTrapezoid[i]))
+    {
+        return true;
+    }
+   }
+}
 
-//     switch (rotation) {
-//         case 0:
-//             return [colorIndices[0], colorIndices[0], colorIndices[1], colorIndices[1], colorIndices[2], colorIndices[2]];
-//         case 1:
-//             return [colorIndices[2], colorIndices[0], colorIndices[0], colorIndices[1], colorIndices[1], colorIndices[2]];
+//funciton that cheks to see if two 2D array's are equal to each other
+function equalArray(array1, array2) {
+    if (!Array.isArray(array1) && !Array.isArray(array2)) {
+        return array1 === array2;
+    }
 
-//         case 2:
-//             return [colorIndices[2], colorIndices[2], colorIndices[0], colorIndices[0], colorIndices[1], colorIndices[1]];
+    if (array1.length !== array2.length) {
+        return false;
+    }
 
-//         case 3:
-//             return [colorIndices[1], colorIndices[2], colorIndices[2], colorIndices[0], colorIndices[0], colorIndices[1]];
-
-//         case 4:
-//             return [colorIndices[1], colorIndices[1], colorIndices[2], colorIndices[2], colorIndices[0], colorIndices[0]];
-
-//         case 5:
-//             return [colorIndices[0], colorIndices[1], colorIndices[1], colorIndices[2], colorIndices[2], colorIndices[0]];
-//     }
-
-// }
+    for (var i = 0, len = array1.length; i < len; i++) {
+        if (!equalArray(array1[i], array2[i])) {
+            return false;
+        }
+    }
+    return true;
 }
