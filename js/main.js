@@ -276,7 +276,24 @@ function setUpGame() {
     // Adding a stage background
     gameScene.addChild(createSprite('../media/background-panel.jpg', 0.5, 0.5, 512, 288));
 
-    populateHexGrid();
+    for (let y = 0; y < hexGridHeight; y++) {
+        //on even row
+        if (y % 2 == 0) {
+            for (let x = 0; x < hexGridWidth; x += 2) {
+                let hex = new Hexagon(getScreenSpaceX(x), getScreenSpaceY(y), x, y, hexRadius, Math.trunc(Math.random() * 6), null, null);
+                hexArray.push(hex);
+                gameScene.addChild(hex);
+            }
+        }
+        //odd row
+        else {
+            for (let x = 1; x < hexGridWidth; x += 2) {
+                let hex = new Hexagon(getScreenSpaceX(x), getScreenSpaceY(y), x, y, hexRadius, Math.trunc(Math.random() * 6), null, null);
+                hexArray.push(hex);
+                gameScene.addChild(hex);
+            }
+        }
+    }
 
     // for falling
     for (let i = 0; i < hexGridWidth / 2; i++) {
@@ -391,7 +408,9 @@ function setGameState(state) {
 
     // Resets the game if changing into it from any state other than pause
     if (currentState != pauseState && state == gameState) {
-        populateHexGrid();
+        // populateHexGrid();
+        // breakAllHexes();
+        recolorHexGrid();
         currentTimeInSec = startTimeInSec;
         score = 0;
     }
@@ -408,25 +427,9 @@ function setGameState(state) {
 }
 
 // Helper function to rebuild the hex grid on demand
-function populateHexGrid() {
-    hexArray = [];
-    for (let y = 0; y < hexGridHeight; y++) {
-        //on even row
-        if (y % 2 == 0) {
-            for (let x = 0; x < hexGridWidth; x += 2) {
-                let hex = new Hexagon(getScreenSpaceX(x), getScreenSpaceY(y), x, y, hexRadius, Math.trunc(Math.random() * 6), null, null);
-                hexArray.push(hex);
-                gameScene.addChild(hex);
-            }
-        }
-        //odd row
-        else {
-            for (let x = 1; x < hexGridWidth; x += 2) {
-                let hex = new Hexagon(getScreenSpaceX(x), getScreenSpaceY(y), x, y, hexRadius, Math.trunc(Math.random() * 6), null, null);
-                hexArray.push(hex);
-                gameScene.addChild(hex);
-            }
-        }
+function recolorHexGrid() {
+    for (let hex of hexArray) {
+        hex.randomizeColors();
     }
 }
 
