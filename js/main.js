@@ -201,24 +201,7 @@ function setUpGame() {
     // Adding a stage background
     gameScene.addChild(createSprite('../media/background-panel.jpg', 0.5, 0.5, 512, 288));
 
-    for (let y = 0; y < hexGridHeight; y++) {
-        //on even row
-        if (y % 2 == 0) {
-            for (let x = 0; x < hexGridWidth; x += 2) {
-                let hex = new Hexagon(getScreenSpaceX(x), getScreenSpaceY(y), x, y, hexRadius, Math.trunc(Math.random() * 6), null, null);
-                hexArray.push(hex);
-                gameScene.addChild(hex);
-            }
-        }
-        //odd row
-        else {
-            for (let x = 1; x < hexGridWidth; x += 2) {
-                let hex = new Hexagon(getScreenSpaceX(x), getScreenSpaceY(y), x, y, hexRadius, Math.trunc(Math.random() * 6), null, null);
-                hexArray.push(hex);
-                gameScene.addChild(hex);
-            }
-        }
-    }
+    populateHexGrid();
 
     for (let i = 0; i < hexGridWidth / 2; i++) {
         columnWaitAmount.push(0);
@@ -321,6 +304,11 @@ function setGameState(state) {
     //3 - pause
     //4 - endgame
 
+    // Resets the game if changing into it from any state other than pause
+    if (gameState != 3 && state == 2) {
+        populateHexGrid();
+    }
+
     //store our new state
     gameState = state;
 
@@ -332,6 +320,28 @@ function setGameState(state) {
     scenes[state].visible = true;
 }
 
+// Helper function to rebuild the hex grid on demand
+function populateHexGrid() {
+    hexArray = [];
+    for (let y = 0; y < hexGridHeight; y++) {
+        //on even row
+        if (y % 2 == 0) {
+            for (let x = 0; x < hexGridWidth; x += 2) {
+                let hex = new Hexagon(getScreenSpaceX(x), getScreenSpaceY(y), x, y, hexRadius, Math.trunc(Math.random() * 6), null, null);
+                hexArray.push(hex);
+                gameScene.addChild(hex);
+            }
+        }
+        //odd row
+        else {
+            for (let x = 1; x < hexGridWidth; x += 2) {
+                let hex = new Hexagon(getScreenSpaceX(x), getScreenSpaceY(y), x, y, hexRadius, Math.trunc(Math.random() * 6), null, null);
+                hexArray.push(hex);
+                gameScene.addChild(hex);
+            }
+        }
+    }
+}
 
 // Creates and returns a button that calls setGameState
 // I have no idea why, but passing in a callback function refused to work and I am very upsetti about it :(
