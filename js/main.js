@@ -20,13 +20,16 @@ let stage;
 let titleScene;
 let howToPlayScene;
 let gameScene;
+let pauseScene;
+let endGameScene;
 let scenes = [];
 
 //the state the game is currently in. defines behavior and sounds at that time
-let gameState = 0;
-//0 - title screen;
-//1 - how to play
-//2 - gameplay
+let titleState = 0;
+let howToPlayState = 1;
+let gameState = 2;
+let pauseState = 3;
+let endGameState = 3;
 
 //Key names for local storage
 const prefix = "nmb9745-";
@@ -96,8 +99,113 @@ let keysHeld = [];
 let keysReleased = [];
 
 //once finished, call the setUpGame function
-app.loader.onComplete.add(setUpGame);
+app.loader.onComplete.add(setupScenes);
 app.loader.load();
+
+// Initializing the game's scenes- This should always be the first setup function called
+function setupScenes() {
+    //set up our scenes/containers
+    stage = app.stage;
+
+    //init our HUD containers for different game states
+    titleScene = new PIXI.Container();
+    howToPlayScene = new PIXI.Container();
+    gameScene = new PIXI.Container();
+    pauseScene = new PIXI.Container();
+    endGameScene = new PIXI.Container();
+
+    //store our scenes for easy access later
+    scenes = [titleScene, howToPlayScene, gameScene, pauseScene, endGameScene];
+    setUpTitle();
+    setupHowToPlay();
+    setUpGame();
+    setUpPause();
+    setUpEnd();
+}
+
+// Initialization for the Title screen
+function setUpTitle() {
+    let buttonStyle = new PIXI.TextStyle({
+        fill: 0xffeb0b,
+        fontSize: 48,
+        fontFamily: "Amaranth",
+        dropShadow: true,
+        dropShadowAlpha: 1,
+        dropShadowBlur: 5,
+        dropShadowDistance: 1
+    });
+
+    // This stuff has hardcoded locations, which I need to fix later
+
+    // Adding a stage background
+    titleScene.addChild(createSprite('../media/background-panel.jpg', 0.5, 0.5, 512, 288));
+
+    // Creating the logo
+    let logo = createSprite('../media/main-logo.png', 0, 0, 120, 50);
+    logo.width = 500;
+    logo.height = 80;
+    titleScene.addChild(logo);
+
+    // Creating the buttons
+    let playButton = createStateButton("Play", 75, 180, 2, buttonStyle);
+    titleScene.addChild(playButton);
+    let howToPlayButton = createStateButton("How To Play", 75, 240, 1, buttonStyle);
+    titleScene.addChild(howToPlayButton);
+
+    app.stage.addChild(titleScene);
+
+    //our game state starts at 0 (title screen)
+    setGameState(0);
+}
+
+// Inits the tutorial
+function setupHowToPlay() {
+    //add our window keyboard listener
+    window.addEventListener("keydown", keysDown);
+    window.addEventListener("keyup", keysUp);
+
+    // Adding a stage background
+    howToPlayScene.addChild(createSprite('../media/background-panel.jpg', 0.5, 0.5, 512, 288));
+
+    // Creating the logo
+    let logo = createSprite('../media/how-to-play-logo.png', 0, 0, 170, 50);
+    logo.width = 400;
+    logo.height = 80;
+    howToPlayScene.addChild(logo);
+
+    let buttonStyle = new PIXI.TextStyle({
+        fill: 0xffeb0b,
+        fontSize: 48,
+        fontFamily: "Amaranth",
+        dropShadow: true,
+        dropShadowAlpha: 1,
+        dropShadowBlur: 5,
+        dropShadowDistance: 1
+    });
+
+    let textStyle = new PIXI.TextStyle({
+        fill: 0x000000,
+        fontSize: 24,
+        fontFamily: "Amaranth",
+    });
+
+    howToPlayScene.addChild(createText("Drag your mouse between segments of the same color to", 75, 150, textStyle));
+    howToPlayScene.addChild(createText("make a match! You can also press Q and E to rotate hexes.", 75, 170, textStyle));
+    howToPlayScene.addChild(createText("Make bigger matches for better scores. You can also draw", 75, 210, textStyle));
+    howToPlayScene.addChild(createText("certain patterns for unique effects!", 75, 230, textStyle));
+
+    // Creating the buttons
+    let playButton = createStateButton("Back to Menu", 75, 500, 0, buttonStyle);
+    howToPlayScene.addChild(playButton);
+
+    howToPlayScene.addChild(new Hexagon(getScreenSpaceX(3), getScreenSpaceY(3), 3, 3, hexRadius, Math.trunc(Math.random() * 6), null, null));
+    howToPlayScene.addChild(new Hexagon(getScreenSpaceX(5), getScreenSpaceY(3), 5, 3, hexRadius, Math.trunc(Math.random() * 6), null, null));
+    howToPlayScene.addChild(new Hexagon(getScreenSpaceX(7), getScreenSpaceY(3), 5, 3, hexRadius, Math.trunc(Math.random() * 6), null, null));
+    howToPlayScene.addChild(new Hexagon(getScreenSpaceX(4), getScreenSpaceY(4), 3, 3, hexRadius, Math.trunc(Math.random() * 6), null, null));
+    howToPlayScene.addChild(new Hexagon(getScreenSpaceX(6), getScreenSpaceY(4), 5, 3, hexRadius, Math.trunc(Math.random() * 6), null, null));
+
+    app.stage.addChild(howToPlayScene);
+}
 
 //initializes all the objects needed to run the game from the title screen
 function setUpGame() {
@@ -113,26 +221,10 @@ function setUpGame() {
     bloomFilter.bloomScale = .5;
 
     hexPath = [];
-    //set up our scenes/containers
-    stage = app.stage;
-    for (let y = 0; y < hexGridHeight; y++) {
-        //on even row
-        if (y % 2 == 0) {
-            for (let x = 0; x < hexGridWidth; x += 2) {
-                let hex = new Hexagon(getScreenSpaceX(x), getScreenSpaceY(y), x, y, hexRadius, Math.trunc(Math.random() * 6), null, null);
-                hexArray.push(hex);
-                gameScene.addChild(hex);
-            }
-        }
-        //odd row
-        else {
-            for (let x = 1; x < hexGridWidth; x += 2) {
-                let hex = new Hexagon(getScreenSpaceX(x), getScreenSpaceY(y), x, y, hexRadius, Math.trunc(Math.random() * 6), null, null);
-                hexArray.push(hex);
-                gameScene.addChild(hex);
-            }
-        }
-    }
+    // Adding a stage background
+    gameScene.addChild(createSprite('../media/background-panel.jpg', 0.5, 0.5, 512, 288));
+
+    populateHexGrid();
 
     // for falling
     for (let i = 0; i < hexGridWidth / 2; i++) {
@@ -167,16 +259,70 @@ function setUpGame() {
     displacementFilter.scale.x = 17;
     displacementFilter.scale.y = 17;
 
-    //store our scenes for easy access later
-    scenes = [titleScene, howToPlayScene, gameScene];
-
     app.stage.addChild(gameScene);
-
-    //our game state starts at 0 (title screen)
-    //setGameState(0);
 
     //finally, run our update loop!
     app.ticker.add(updateLoop);
+}
+
+// Inits the pause menu
+function setUpPause() {
+    let buttonStyle = new PIXI.TextStyle({
+        fill: 0xffeb0b,
+        fontSize: 48,
+        fontFamily: "Amaranth",
+        dropShadow: true,
+        dropShadowAlpha: 1,
+        dropShadowBlur: 5,
+        dropShadowDistance: 1
+    });
+
+    // Adding a stage background
+    pauseScene.addChild(createSprite('../media/background-panel.jpg', 0.5, 0.5, 512, 288));
+
+    // Creating the logo
+    let logo = createSprite('../media/pause-logo.png', 0, 0, 240, 50);
+    logo.width = 250;
+    logo.height = 80;
+    pauseScene.addChild(logo);
+
+    // Creating the buttons
+    let gameStateButton = createStateButton("Back to Game", 75, 180, 2, buttonStyle);
+    pauseScene.addChild(gameStateButton);
+    let backButton = createStateButton("Return to Menu", 75, 240, 0, buttonStyle);
+    pauseScene.addChild(backButton);
+    let endGameButton = createStateButton("[TEMP] End Game", 75, 300, 4, buttonStyle);
+    pauseScene.addChild(endGameButton);
+
+    app.stage.addChild(pauseScene);
+}
+
+// Inits everything for the end card
+function setUpEnd() {
+    let buttonStyle = new PIXI.TextStyle({
+        fill: 0xffeb0b,
+        fontSize: 48,
+        fontFamily: "Amaranth",
+        dropShadow: true,
+        dropShadowAlpha: 1,
+        dropShadowBlur: 5,
+        dropShadowDistance: 1
+    });
+
+    // Adding a stage background
+    endGameScene.addChild(createSprite('../media/background-panel.jpg', 0.5, 0.5, 512, 288));
+
+    // Creating the logo
+    let logo = createSprite('../media/game-over-logo.png', 0, 0, 115, 50);
+    logo.width = 500;
+    logo.height = 80;
+    endGameScene.addChild(logo);
+
+    // Creating the buttons
+    let backButton = createStateButton("Return to Menu", 75, 180, 0, buttonStyle);
+    endGameScene.addChild(backButton);
+
+    app.stage.addChild(endGameScene);
 }
 
 //switches the game between its various states and runs specific 
@@ -185,40 +331,90 @@ function setGameState(state) {
     //0 - title screen;
     //1 - how to play
     //2 - game
+    //3 - pause
+    //4 - endgame
+
+    // Resets the game if changing into it from any state other than pause
+    if (gameState != 3 && state == 2) {
+        populateHexGrid();
+    }
 
     //store our new state
     gameState = state;
 
     //hide all HUD containers
-    for (let i = 0; i < scenes.length; i++) {
-        scenes[i].visible = false;
+    for (let scene of scenes) {
+        scene.visible = false;
     }
     //and unhide the one for the state we are switching to
     scenes[state].visible = true;
 }
 
+// Helper function to rebuild the hex grid on demand
+function populateHexGrid() {
+    hexArray = [];
+    for (let y = 0; y < hexGridHeight; y++) {
+        //on even row
+        if (y % 2 == 0) {
+            for (let x = 0; x < hexGridWidth; x += 2) {
+                let hex = new Hexagon(getScreenSpaceX(x), getScreenSpaceY(y), x, y, hexRadius, Math.trunc(Math.random() * 6), null, null);
+                hexArray.push(hex);
+                gameScene.addChild(hex);
+            }
+        }
+        //odd row
+        else {
+            for (let x = 1; x < hexGridWidth; x += 2) {
+                let hex = new Hexagon(getScreenSpaceX(x), getScreenSpaceY(y), x, y, hexRadius, Math.trunc(Math.random() * 6), null, null);
+                hexArray.push(hex);
+                gameScene.addChild(hex);
+            }
+        }
+    }
+}
 
-//creates a button for our menus and sets its properties
-//returns said button
-function createButton(text, x, y, func, style = buttonStyle) {
+// Creates and returns a button that calls setGameState
+// I have no idea why, but passing in a callback function refused to work and I am very upsetti about it :(
+function createStateButton(text, x, y, targetState, style = buttonStyle) {
     //store the text and position values
     let button = new PIXI.Text(text);
     button.style = style;
     button.x = x;
     button.y = y;
-    button.anchor.set(.5, .5);
+    button.anchor.set(0, .5);
     //make it interactive
     button.interactive = true;
     button.buttonMode = true;
     //when the user clicks down, set our selected button to this one
-    button.on('pointerdown', function (e) { selectedButton = button });
-    //when the user releases the click; if this is the same button their clicked down on, then call its function and play a sound!
-    button.on('pointerup', function (e) { if (button == selectedButton) { func(); buttonClickSound.play(); } });
-    //if the user hovers over the button, change alpha and play a sound
-    button.on('pointerover', function (e) { buttonHoverSound.play(); e.target.alpha = 0.7; });
+    // button.on('pointerdown', function (e) { selectedButton = button });
+    //when the user releases the click; if this is the same button their clicked down on, then call its function!
+    button.on('pointerup', function (e) { setGameState(targetState); });
+    //if the user hovers over the button, change alpha
+    button.on('pointerover', function (e) { e.target.alpha = 0.7; });
     //if the user unhovers this button, return alpha back to normal
     button.on('pointerout', e => e.currentTarget.alpha = 1.0);
     return button;
+}
+
+function createText(text, x, y, style) {
+    //store the text and position values
+    let textItem = new PIXI.Text(text);
+    textItem.style = style;
+    textItem.x = x;
+    textItem.y = y;
+    textItem.anchor.set(0, .5);
+    return textItem;
+}
+
+// Creates a Sprite
+function createSprite(url, anchorX, anchorY, posX, posY) {
+    let img = PIXI.Sprite.from(url);
+    img.anchor.x = anchorX;
+    img.anchor.y = anchorY;
+    img.position.x = posX;
+    img.position.y = posY;
+
+    return img;
 }
 
 
@@ -271,6 +467,11 @@ function updateLoop() {
 
     pathIndicator.clear();
     pathIndicator.drawLine();
+
+    // You can hit esc to pause the game now
+    if (keysHeld["27"]) {
+        setGameState(3);
+    }
 
     //check for E press to rotate hex CW
     if (highlightedHex != null && keysHeld["69"]) {
