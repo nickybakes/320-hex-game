@@ -25,11 +25,14 @@ let endGameScene;
 let scenes = [];
 
 //the state the game is currently in. defines behavior and sounds at that time
-let titleState = 0;
-let howToPlayState = 1;
-let gameState = 2;
-let pauseState = 3;
-let endGameState = 3;
+const titleState = 0;
+const howToPlayState = 1;
+const gameState = 2;
+const pauseState = 3;
+const endGameState = 4;
+
+// Stores data for the current state of the game
+let currentState = 0;
 
 //Key names for local storage
 const prefix = "nmb9745-";
@@ -115,12 +118,13 @@ function setupScenes() {
     endGameScene = new PIXI.Container();
 
     //store our scenes for easy access later
-    scenes = [titleScene, howToPlayScene, gameScene, pauseScene, endGameScene];
+    
     setUpTitle();
     setupHowToPlay();
     setUpGame();
     setUpPause();
     setUpEnd();
+    scenes = [titleScene, howToPlayScene, gameScene, pauseScene, endGameScene];
 
     //our game state starts at 0 (title screen)
     setGameState(0);
@@ -335,16 +339,13 @@ function setGameState(state) {
     //3 - pause
     //4 - endgame
 
-    console.log(gameState);
-    console.log(state);
-
     // Resets the game if changing into it from any state other than pause
-    if (gameState != 3 && state == 2) {
+    if (currentState != pauseState && state == gameState) {
         populateHexGrid();
     }
 
     //store our new state
-    gameState = state;
+    currentState = state;
 
     //hide all HUD containers
     for (let scene of scenes) {
