@@ -38,8 +38,6 @@ class Hexagon extends PIXI.Graphics {
     //stores values of hexagon
     hexagonValues;
 
-
-
     colorsRGB = [{ r: 255, g: 0, b: 0 }, { r: 245, g: 139, b: 0 }, { r: 255, g: 208, b: 0 }, { r: 0, g: 145, b: 0 }, { r: 0, g: 110, b: 255 }, { r: 116, g: 0, b: 184 }];
     colorIndices;
 
