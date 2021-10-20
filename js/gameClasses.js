@@ -86,6 +86,22 @@ class Hexagon extends PIXI.Graphics {
         this.drawHex();
     }
 
+    setColors(color1, color2, color3) {
+        this.rotationValue = Math.trunc(Math.random() * 6);
+        this.rotationValue = moveIntoRange(this.rotationValue, 0, 6);
+        this.wantedRotationValue = this.rotationValue;
+        this.colorIndices = [];
+        this.hexagonValues = [];
+        this.colorIndices = [color1, color2, color3];
+   
+
+        //This part assigns hexagonValues a value
+        this.hexagonValues = [this.colorIndices[0], this.colorIndices[0], this.colorIndices[1], this.colorIndices[1], this.colorIndices[2], this.colorIndices[2]];
+
+        this.clear();
+        this.drawHex();
+    }
+
     rotateCW() {
         if (rotationCoolDown > 0 || hexFallAnimationTime > 0)
             return;

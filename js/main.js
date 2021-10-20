@@ -53,6 +53,10 @@ let hexGridHeight = 6;
 let hexGridWidth = 6 * 2;
 let hexPath = [];
 
+// Demo variables
+let demoHexArray = [];
+let demoHexPath = [];
+
 let highlightedHex;
 let dragStartHex;
 let pathIndicator;
@@ -108,6 +112,22 @@ let mouseHeldDown;
 let keysHeld = [];
 let keysReleased = [];
 
+// Style objects for menu states used in multiple scenes
+const buttonStyle = new PIXI.TextStyle({
+    fill: 0xffeb0b,
+    fontSize: 60,
+    fontFamily: "Amaranth",
+    dropShadow: true,
+    dropShadowAlpha: 1,
+    dropShadowBlur: 5,
+    dropShadowDistance: 1
+});
+const textStyle = new PIXI.TextStyle({
+    fill: 0x000000,
+    fontSize: 24,
+    fontFamily: "Amaranth",
+});
+
 //once finished, call the setUpGame function
 app.loader.onComplete.add(setupScenes);
 app.loader.load();
@@ -128,9 +148,9 @@ function setupScenes() {
     //store our scenes for easy access later
     
     setUpTitle();
-    setupHowToPlay();
     setUpMode();
     setUpGame();
+    setupHowToPlay();
     setUpPause();
     setUpEnd();
     scenes = [titleScene, howToPlayScene, modeScene, gameScene, pauseScene, endGameScene];
@@ -141,7 +161,7 @@ function setupScenes() {
 
 // Initialization for the Title screen
 function setUpTitle() {
-    let buttonStyle = new PIXI.TextStyle({
+    let playButtonStyle = new PIXI.TextStyle({
         fill: 0xffeb0b,
         fontSize: 60,
         fontFamily: "Amaranth",
@@ -163,10 +183,16 @@ function setUpTitle() {
     titleScene.addChild(logo);
 
     // Creating the buttons
-    let playButton = createStateButton("PLAY", 300, 220, howToPlayState, buttonStyle);
+    let playButton = createStateButton("PLAY", 300, 220, howToPlayState, playButtonStyle);
     titleScene.addChild(playButton);
     // let howToPlayButton = createStateButton("How To Play", 75, 240, 1, buttonStyle);
     // titleScene.addChild(howToPlayButton);
+
+    // titleScene.addChild(new Hexagon(getScreenSpaceX(3), getScreenSpaceY(3), 3, 3, hexRadius, Math.trunc(Math.random() * 6), null, null));
+    // titleScene.addChild(new Hexagon(getScreenSpaceX(5), getScreenSpaceY(3), 5, 3, hexRadius, Math.trunc(Math.random() * 6), null, null));
+    // titleScene.addChild(new Hexagon(getScreenSpaceX(7), getScreenSpaceY(3), 5, 3, hexRadius, Math.trunc(Math.random() * 6), null, null));
+    // titleScene.addChild(new Hexagon(getScreenSpaceX(4), getScreenSpaceY(4), 3, 3, hexRadius, Math.trunc(Math.random() * 6), null, null));
+    // titleScene.addChild(new Hexagon(getScreenSpaceX(6), getScreenSpaceY(4), 5, 3, hexRadius, Math.trunc(Math.random() * 6), null, null));
 
     app.stage.addChild(titleScene);
 
@@ -178,6 +204,8 @@ function setupHowToPlay() {
     window.addEventListener("keydown", keysDown);
     window.addEventListener("keyup", keysUp);
 
+    demoHexPath = [];
+
     // Adding a stage background
     howToPlayScene.addChild(createSprite('../media/background-panel.jpg', 0.5, 0.5, 512, 288));
 
@@ -187,26 +215,25 @@ function setupHowToPlay() {
     logo.height = 80;
     howToPlayScene.addChild(logo);
 
-    let buttonStyle = new PIXI.TextStyle({
-        fill: 0xffeb0b,
-        fontSize: 48,
-        fontFamily: "Amaranth",
-        dropShadow: true,
-        dropShadowAlpha: 1,
-        dropShadowBlur: 5,
-        dropShadowDistance: 1
-    });
-
-    let textStyle = new PIXI.TextStyle({
-        fill: 0x000000,
-        fontSize: 24,
-        fontFamily: "Amaranth",
-    });
-
     howToPlayScene.addChild(createText("Drag your mouse between segments of the same color to", 75, 150, textStyle));
     howToPlayScene.addChild(createText("make a match! You can also press Q and E to rotate hexes.", 75, 170, textStyle));
     howToPlayScene.addChild(createText("Make bigger matches for better scores. You can also draw", 75, 210, textStyle));
     howToPlayScene.addChild(createText("certain patterns for unique effects!", 75, 230, textStyle));
+    howToPlayScene.addChild(createText("Try finding a way to connect all 3 of these hexes with a path!", 75, 270, textStyle));
+
+    let demoHex1 = new Hexagon(getScreenSpaceX(3), getScreenSpaceY(3), 2, 3, hexRadius, 1, null, null);
+    demoHex1.setColors(3, 1, 2);
+    demoHexArray.push(demoHex1);
+    let demoHex2 = new Hexagon(getScreenSpaceX(5), getScreenSpaceY(3), 4, 3, hexRadius, 3, null, null);
+    demoHex2.setColors(2, 1, 1);
+    demoHexArray.push(demoHex2);
+    let demoHex3 = new Hexagon(getScreenSpaceX(7), getScreenSpaceY(3), 6, 3, hexRadius, 2, null, null);
+    demoHex3.setColors(3, 2, 1);
+    demoHexArray.push(demoHex3);
+    howToPlayScene.addChild(demoHex1);
+    howToPlayScene.addChild(demoHex2);
+    howToPlayScene.addChild(demoHex3);
+    // titleScene.addChild(new Hexagon(getScreenSpaceX(6), getScreenSpaceY(4), 5, 3, hexRadius, Math.trunc(Math.random() * 6), null, null));
 
     // Creating the buttons
     let playButton = createStateButton("Back to Menu", 75, 500, titleState, buttonStyle);
@@ -214,29 +241,42 @@ function setupHowToPlay() {
     let modeButton = createStateButton("[TEMP] Mode", 200, 500, modeState, buttonStyle);
     howToPlayScene.addChild(modeButton);
 
-    howToPlayScene.addChild(new Hexagon(getScreenSpaceX(3), getScreenSpaceY(3), 3, 3, hexRadius, Math.trunc(Math.random() * 6), null, null));
-    howToPlayScene.addChild(new Hexagon(getScreenSpaceX(5), getScreenSpaceY(3), 5, 3, hexRadius, Math.trunc(Math.random() * 6), null, null));
-    howToPlayScene.addChild(new Hexagon(getScreenSpaceX(7), getScreenSpaceY(3), 5, 3, hexRadius, Math.trunc(Math.random() * 6), null, null));
-    howToPlayScene.addChild(new Hexagon(getScreenSpaceX(4), getScreenSpaceY(4), 3, 3, hexRadius, Math.trunc(Math.random() * 6), null, null));
-    howToPlayScene.addChild(new Hexagon(getScreenSpaceX(6), getScreenSpaceY(4), 5, 3, hexRadius, Math.trunc(Math.random() * 6), null, null));
+    // for falling
+    // for (let i = 0; i < hexGridWidth / 2; i++) {
+    //     columnWaitAmount.push(0);
+    // }
+
+    pathIndicator = new PathIndicator();
+    howToPlayScene.addChild(pathIndicator);
+
+    // animates white line
+    displacementSprite = PIXI.Sprite.from('media/displacement-map-tiling.jpg');
+    // Make sure the sprite is wrapping.
+    displacementSprite.texture.baseTexture.wrapMode = PIXI.WRAP_MODES.REPEAT;
+    displacementFilter = new PIXI.filters.DisplacementFilter(displacementSprite);
+
+    howToPlayScene.addChild(displacementSprite);
+
+    wrongMoveIndicator = new WrongMoveIndicator();
+    howToPlayScene.addChild(wrongMoveIndicator);
+
+    // events for drag end
+    // app.stage.on('pointerup', onDragEnd);
+    window.addEventListener('mouseup', onDragEnd);
+
+    pathIndicator.filters = [displacementFilter];
+
+    displacementFilter.scale.x = 17;
+    displacementFilter.scale.y = 17;
 
     app.stage.addChild(howToPlayScene);
+
+    //finally, run our update loop!
+    app.ticker.add(updateLoop);
 }
 
 // Initialization for the Mode screen
 function setUpMode() {
-    let buttonStyle = new PIXI.TextStyle({
-        fill: 0xffeb0b,
-        fontSize: 60,
-        fontFamily: "Amaranth",
-        dropShadow: true,
-        dropShadowAlpha: 1,
-        dropShadowBlur: 5,
-        dropShadowDistance: 1
-    });
-
-    // This stuff has hardcoded locations, which I need to fix later
-
     // Adding a stage background
     modeScene.addChild(createSprite('../media/background-panel.jpg', 0.5, 0.5, 512, 288));
 
@@ -332,21 +372,11 @@ function setUpGame() {
     app.stage.addChild(gameScene);
 
     //finally, run our update loop!
-    app.ticker.add(updateLoop);
+    // app.ticker.add(updateLoop);
 }
 
 // Inits the pause menu
 function setUpPause() {
-    let buttonStyle = new PIXI.TextStyle({
-        fill: 0xffeb0b,
-        fontSize: 48,
-        fontFamily: "Amaranth",
-        dropShadow: true,
-        dropShadowAlpha: 1,
-        dropShadowBlur: 5,
-        dropShadowDistance: 1
-    });
-
     // Adding a stage background
     pauseScene.addChild(createSprite('../media/background-panel.jpg', 0.5, 0.5, 512, 288));
 
@@ -371,16 +401,6 @@ function setUpPause() {
 
 // Inits everything for the end card
 function setUpEnd() {
-    let buttonStyle = new PIXI.TextStyle({
-        fill: 0xffeb0b,
-        fontSize: 48,
-        fontFamily: "Amaranth",
-        dropShadow: true,
-        dropShadowAlpha: 1,
-        dropShadowBlur: 5,
-        dropShadowDistance: 1
-    });
-
     // Adding a stage background
     endGameScene.addChild(createSprite('../media/background-panel.jpg', 0.5, 0.5, 512, 288));
 
@@ -390,8 +410,12 @@ function setUpEnd() {
     logo.height = 80;
     endGameScene.addChild(logo);
 
+    // NOTE: DO THIS IN UPDATELOOP, APPARENTLY PIXI TEXT DOES NOT UPDATE DYNAMICALLY
+    // endGameScene.addChild(createText(`Your final score: ${score}`, 75, 150, textStyle));
+    // howToPlayScene.addChild(createText("High Score: ", 75, 170, textStyle));
+
     // Creating the buttons
-    let backButton = createStateButton("Return to Menu", 75, 180, 0, buttonStyle);
+    let backButton = createStateButton("Return to Menu", 170, 500, 0, buttonStyle);
     endGameScene.addChild(backButton);
 
     app.stage.addChild(endGameScene);
@@ -406,7 +430,7 @@ function setGameState(state) {
     //3 - pause
     //4 - endgame
 
-    // Resets the game if changing into it from any state other than pause
+    // Resets the game state if changing into it from any state other than pause
     if (currentState != pauseState && state == gameState) {
         // populateHexGrid();
         // breakAllHexes();
@@ -562,6 +586,12 @@ function updateLoop() {
     //update hex data
     for (let i = 0; i < hexArray.length; i++) {
         hexArray[i].update();
+    }
+
+    if (currentState == howToPlayState) {
+        for (let i = 0; i < demoHexArray.length; i++) {
+            demoHexArray[i].update();
+        }
     }
 
     // Offsets the displacement map each frame
