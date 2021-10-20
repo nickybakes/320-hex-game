@@ -236,8 +236,6 @@ function setupHowToPlay() {
     // Creating the buttons
     let playButton = createStateButton("Back to Menu", 75, 500, titleState, buttonStyle);
     howToPlayScene.addChild(playButton);
-    let modeButton = createStateButton("[TEMP] Mode", 200, 500, modeState, buttonStyle);
-    howToPlayScene.addChild(modeButton);
 
     // for falling
     // for (let i = 0; i < hexGridWidth / 2; i++) {
