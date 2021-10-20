@@ -410,21 +410,13 @@ function setGameState(state) {
     //3 - pause
     //4 - endgame
 
-    // Resets the game state if changing into it from any state other than pause
-    // if (currentState != pauseState && state == gameState) {
-    //     // populateHexGrid();
-    //     // breakAllHexes();
-        
-    //     score = 0;
-    // } else if (currentState == howToPlayState && state == gameState) {
-    //     passChildren(gameState);
-    // } else if (currentState == gameState && state == gameState)
-
+    // Handle anything that needs to run while transitioning between states
     switch (state) {
         case gameState:
             if (currentState != pauseState) {
                 recolorHexGrid();
                 currentTimeInSec = startTimeInSec;
+                score = 0;
             }
             passChildren(gameState);
             break;
@@ -698,7 +690,8 @@ function onDragEnd(e) {
 
     console.log("Drag End (for whole window)");
     let completePath = compareHexes(hexPath);
-    if (completePath) {
+    if (completePath && currentState == gameState) {
+        console.log("here");
         detectShape(hexPath);   
         //start the hex breaking animation
         hexBreakAnimationTime = hexBreakAnimationTimeMax;
@@ -720,9 +713,11 @@ function onDragEnd(e) {
         scoreTracker.text = scoreString + score;
 
         currentTimeInSec += hexPath.length; // currently add one sec for each hex
-        // Handles the tutorial segment
-        if (currentState == howToPlayState && hexPath.length == 3) setGameState(gameState);
 
+        pathIndicator.clear();
+    }else if (completePath && currentState == howToPlayState) {
+        hexPath = [];
+        setGameState(modeState);
         pathIndicator.clear();
     } else {
         //if the path is wrong in any way
