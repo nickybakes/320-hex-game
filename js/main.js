@@ -121,6 +121,9 @@ function setupScenes() {
     setUpGame();
     setUpPause();
     setUpEnd();
+
+    //our game state starts at 0 (title screen)
+    setGameState(0);
 }
 
 // Initialization for the Title screen
@@ -154,8 +157,6 @@ function setUpTitle() {
 
     app.stage.addChild(titleScene);
 
-    //our game state starts at 0 (title screen)
-    setGameState(0);
 }
 
 // Inits the tutorial
@@ -333,6 +334,9 @@ function setGameState(state) {
     //2 - game
     //3 - pause
     //4 - endgame
+
+    console.log(gameState);
+    console.log(state);
 
     // Resets the game if changing into it from any state other than pause
     if (gameState != 3 && state == 2) {
