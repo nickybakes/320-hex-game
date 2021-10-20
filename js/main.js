@@ -598,6 +598,7 @@ function onDragEnd(e) {
     console.log("Drag End (for whole window)");
     let completePath = compareHexes(hexPath);
     if (completePath) {
+        detectShape(hexPath);   
         //start the hex breaking animation
         hexBreakAnimationTime = hexBreakAnimationTimeMax;
         hexBreakAnimationTimeMaxPerHex = hexBreakAnimationTimeMax / hexPath.length;
