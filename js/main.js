@@ -19,20 +19,27 @@ let stage;
 //all the HUDs for each game state
 let titleScene;
 let howToPlayScene;
+let modeScene;
 let gameScene;
 let pauseScene;
 let endGameScene;
 let scenes = [];
 
-//the state the game is currently in. defines behavior and sounds at that time
+// As close to an enum as we're gonna get with no TypeScript :(
 const titleState = 0;
 const howToPlayState = 1;
-const gameState = 2;
-const pauseState = 3;
-const endGameState = 4;
+const modeState = 2;
+const gameState = 3;
+const pauseState = 4;
+const endGameState = 5;
 
 // Stores data for the current state of the game
 let currentState = 0;
+
+const timedMode = 0;
+const endlessMode = 1;
+
+let currentMode;
 
 //Key names for local storage
 const prefix = "nmb9745-";
@@ -113,6 +120,7 @@ function setupScenes() {
     //init our HUD containers for different game states
     titleScene = new PIXI.Container();
     howToPlayScene = new PIXI.Container();
+    modeScene = new PIXI.Container();
     gameScene = new PIXI.Container();
     pauseScene = new PIXI.Container();
     endGameScene = new PIXI.Container();
@@ -121,10 +129,11 @@ function setupScenes() {
     
     setUpTitle();
     setupHowToPlay();
+    setUpMode();
     setUpGame();
     setUpPause();
     setUpEnd();
-    scenes = [titleScene, howToPlayScene, gameScene, pauseScene, endGameScene];
+    scenes = [titleScene, howToPlayScene, modeScene, gameScene, pauseScene, endGameScene];
 
     //our game state starts at 0 (title screen)
     setGameState(0);
@@ -134,7 +143,7 @@ function setupScenes() {
 function setUpTitle() {
     let buttonStyle = new PIXI.TextStyle({
         fill: 0xffeb0b,
-        fontSize: 48,
+        fontSize: 60,
         fontFamily: "Amaranth",
         dropShadow: true,
         dropShadowAlpha: 1,
@@ -154,10 +163,10 @@ function setUpTitle() {
     titleScene.addChild(logo);
 
     // Creating the buttons
-    let playButton = createStateButton("Play", 75, 180, 2, buttonStyle);
+    let playButton = createStateButton("PLAY", 300, 220, howToPlayState, buttonStyle);
     titleScene.addChild(playButton);
-    let howToPlayButton = createStateButton("How To Play", 75, 240, 1, buttonStyle);
-    titleScene.addChild(howToPlayButton);
+    // let howToPlayButton = createStateButton("How To Play", 75, 240, 1, buttonStyle);
+    // titleScene.addChild(howToPlayButton);
 
     app.stage.addChild(titleScene);
 
@@ -200,8 +209,10 @@ function setupHowToPlay() {
     howToPlayScene.addChild(createText("certain patterns for unique effects!", 75, 230, textStyle));
 
     // Creating the buttons
-    let playButton = createStateButton("Back to Menu", 75, 500, 0, buttonStyle);
+    let playButton = createStateButton("Back to Menu", 75, 500, titleState, buttonStyle);
     howToPlayScene.addChild(playButton);
+    let modeButton = createStateButton("[TEMP] Mode", 200, 500, modeState, buttonStyle);
+    howToPlayScene.addChild(modeButton);
 
     howToPlayScene.addChild(new Hexagon(getScreenSpaceX(3), getScreenSpaceY(3), 3, 3, hexRadius, Math.trunc(Math.random() * 6), null, null));
     howToPlayScene.addChild(new Hexagon(getScreenSpaceX(5), getScreenSpaceY(3), 5, 3, hexRadius, Math.trunc(Math.random() * 6), null, null));
@@ -210,6 +221,42 @@ function setupHowToPlay() {
     howToPlayScene.addChild(new Hexagon(getScreenSpaceX(6), getScreenSpaceY(4), 5, 3, hexRadius, Math.trunc(Math.random() * 6), null, null));
 
     app.stage.addChild(howToPlayScene);
+}
+
+// Initialization for the Mode screen
+function setUpMode() {
+    let buttonStyle = new PIXI.TextStyle({
+        fill: 0xffeb0b,
+        fontSize: 60,
+        fontFamily: "Amaranth",
+        dropShadow: true,
+        dropShadowAlpha: 1,
+        dropShadowBlur: 5,
+        dropShadowDistance: 1
+    });
+
+    // This stuff has hardcoded locations, which I need to fix later
+
+    // Adding a stage background
+    modeScene.addChild(createSprite('../media/background-panel.jpg', 0.5, 0.5, 512, 288));
+
+    // Creating the logo
+    let logo = createSprite('../media/mode-logo.png', 0, 0, 120, 50);
+    logo.width = 500;
+    logo.height = 80;
+    modeScene.addChild(logo);
+
+    // Creating the buttons
+    let playTimedButton = createStateButton("TIMED", 300, 220, gameState, buttonStyle);
+    // tweak the state button's onpointerup to change the current mode
+    playTimedButton.on('pointerup', function (e) { setGameState(gameState); currentMode = timedMode;});
+    modeScene.addChild(playTimedButton);
+    let playEndlessButton = createStateButton("ENDLESS", 270, 280, 1, buttonStyle);
+    playEndlessButton.on('pointerup', function (e) { setGameState(gameState); currentMode = endlessMode;});
+    modeScene.addChild(playEndlessButton);
+
+    app.stage.addChild(modeScene);
+
 }
 
 //initializes all the objects needed to run the game from the title screen
@@ -252,6 +299,7 @@ function setUpGame() {
     wrongMoveIndicator = new WrongMoveIndicator();
     gameScene.addChild(wrongMoveIndicator);
 
+    
     gameScene.addChild(timeTracker);
     gameScene.addChild(scoreTracker);
 
@@ -292,11 +340,13 @@ function setUpPause() {
     pauseScene.addChild(logo);
 
     // Creating the buttons
-    let gameStateButton = createStateButton("Back to Game", 75, 180, 2, buttonStyle);
+    let gameStateButton = createStateButton("Back to Game", 75, 180, gameState, buttonStyle);
     pauseScene.addChild(gameStateButton);
-    let backButton = createStateButton("Return to Menu", 75, 240, 0, buttonStyle);
+    let modeButton = createStateButton("Change Mode", 75, 240, modeState, buttonStyle);
+    pauseScene.addChild(modeButton);
+    let backButton = createStateButton("Return to Menu", 75, 300, titleState, buttonStyle);
     pauseScene.addChild(backButton);
-    let endGameButton = createStateButton("[TEMP] End Game", 75, 300, 4, buttonStyle);
+    let endGameButton = createStateButton("End Game", 75, 360, endGameState, buttonStyle);
     pauseScene.addChild(endGameButton);
 
     app.stage.addChild(pauseScene);
@@ -342,6 +392,8 @@ function setGameState(state) {
     // Resets the game if changing into it from any state other than pause
     if (currentState != pauseState && state == gameState) {
         populateHexGrid();
+        currentTimeInSec = startTimeInSec;
+        score = 0;
     }
 
     //store our new state
@@ -475,7 +527,7 @@ function updateLoop() {
 
     // You can hit esc to pause the game now
     if (keysHeld["27"]) {
-        setGameState(3);
+        setGameState(pauseState);
     }
 
     //check for E press to rotate hex CW
@@ -538,14 +590,14 @@ function updateLoop() {
     }
 
     // change to only decrease on first click
-    if(gameStarted){
+    if(gameStarted && currentMode != endlessMode){
         currentTimeInSec -= dt;
         if(currentTimeInSec <= 0){
             currentTimeInSec = 0;
             // END GAME
         }
     }
-    timeTracker.text = secondsToTimeString(currentTimeInSec);
+    currentMode != endlessMode ? timeTracker.text = secondsToTimeString(currentTimeInSec) : timeTracker.text = ``;
 
     //reset our controls for next frame
     keysReleased = [];
