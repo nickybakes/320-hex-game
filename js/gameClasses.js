@@ -34,7 +34,6 @@ class Hexagon extends PIXI.Graphics {
     belowY;
     belowPosX;
 
-
     //stores values of hexagon
     hexagonValues;
 
@@ -86,6 +85,7 @@ class Hexagon extends PIXI.Graphics {
         this.drawHex();
     }
 
+    // Helper function to explicitly define hex colors, used in tutorial section
     setColors(color1, color2, color3) {
         this.rotationValue = Math.trunc(Math.random() * 6);
         this.rotationValue = moveIntoRange(this.rotationValue, 0, 6);

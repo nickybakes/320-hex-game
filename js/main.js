@@ -55,7 +55,7 @@ let hexPath = [];
 
 // Demo variables
 let demoHexArray = [];
-let demoHexPath = [];
+// let demoHexPath = [];
 
 let highlightedHex;
 let dragStartHex;
@@ -101,6 +101,7 @@ let wrongMovePositionAndDirection;
 //the amount of hexes waiting above row 0 in each column, 
 //waiting to be dropped into the playable board
 let columnWaitAmount = [];
+
 
 let displacementSprite;
 let displacementFilter;
@@ -200,11 +201,8 @@ function setUpTitle() {
 
 // Inits the tutorial
 function setupHowToPlay() {
-    //add our window keyboard listener
-    window.addEventListener("keydown", keysDown);
-    window.addEventListener("keyup", keysUp);
 
-    demoHexPath = [];
+    // demoHexPath = [];
 
     // Adding a stage background
     howToPlayScene.addChild(createSprite('../media/background-panel.jpg', 0.5, 0.5, 512, 288));
@@ -246,28 +244,9 @@ function setupHowToPlay() {
     //     columnWaitAmount.push(0);
     // }
 
-    pathIndicator = new PathIndicator();
     howToPlayScene.addChild(pathIndicator);
-
-    // animates white line
-    displacementSprite = PIXI.Sprite.from('media/displacement-map-tiling.jpg');
-    // Make sure the sprite is wrapping.
-    displacementSprite.texture.baseTexture.wrapMode = PIXI.WRAP_MODES.REPEAT;
-    displacementFilter = new PIXI.filters.DisplacementFilter(displacementSprite);
-
     howToPlayScene.addChild(displacementSprite);
-
-    wrongMoveIndicator = new WrongMoveIndicator();
     howToPlayScene.addChild(wrongMoveIndicator);
-
-    // events for drag end
-    // app.stage.on('pointerup', onDragEnd);
-    window.addEventListener('mouseup', onDragEnd);
-
-    pathIndicator.filters = [displacementFilter];
-
-    displacementFilter.scale.x = 17;
-    displacementFilter.scale.y = 17;
 
     app.stage.addChild(howToPlayScene);
 
@@ -354,7 +333,8 @@ function setUpGame() {
     gameScene.addChild(displacementSprite);
 
     wrongMoveIndicator = new WrongMoveIndicator();
-    gameScene.addChild(wrongMoveIndicator);
+    let wmi_proxy = wrongMoveIndicator;
+    gameScene.addChild(wmi_proxy);
 
     
     gameScene.addChild(timeTracker);
@@ -431,12 +411,28 @@ function setGameState(state) {
     //4 - endgame
 
     // Resets the game state if changing into it from any state other than pause
-    if (currentState != pauseState && state == gameState) {
-        // populateHexGrid();
-        // breakAllHexes();
-        recolorHexGrid();
-        currentTimeInSec = startTimeInSec;
-        score = 0;
+    // if (currentState != pauseState && state == gameState) {
+    //     // populateHexGrid();
+    //     // breakAllHexes();
+        
+    //     score = 0;
+    // } else if (currentState == howToPlayState && state == gameState) {
+    //     passChildren(gameState);
+    // } else if (currentState == gameState && state == gameState)
+
+    switch (state) {
+        case gameState:
+            if (currentState != pauseState) {
+                recolorHexGrid();
+                currentTimeInSec = startTimeInSec;
+            }
+            passChildren(gameState);
+            break;
+        case howToPlayState:
+            passChildren(howToPlayState);
+            break;
+        default:
+            break;
     }
 
     //store our new state
@@ -448,6 +444,21 @@ function setGameState(state) {
     }
     //and unhide the one for the state we are switching to
     scenes[state].visible = true;
+}
+
+// Helper function that passes objects between scenes
+// Made so I don't have to literally recode half the drawing code because PIXI scenes are a tree
+function passChildren(targetState) {
+    if (targetState == gameState) {
+        gameScene.addChild(pathIndicator);
+        gameScene.addChild(displacementSprite);
+        gameScene.addChild(wrongMoveIndicator);
+    }
+    else if (targetState == howToPlayState) {
+        howToPlayScene.addChild(pathIndicator);
+        howToPlayScene.addChild(displacementSprite);
+        howToPlayScene.addChild(wrongMoveIndicator);
+    }
 }
 
 // Helper function to rebuild the hex grid on demand
@@ -709,6 +720,8 @@ function onDragEnd(e) {
         scoreTracker.text = scoreString + score;
 
         currentTimeInSec += hexPath.length; // currently add one sec for each hex
+        // Handles the tutorial segment
+        if (currentState == howToPlayState && hexPath.length == 3) setGameState(gameState);
 
         pathIndicator.clear();
     } else {
