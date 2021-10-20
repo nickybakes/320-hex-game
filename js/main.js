@@ -88,6 +88,9 @@ app.loader.load();
 
 // Initializing the game's scenes- This should always be the first setup function called
 function setupScenes() {
+    //set up our scenes/containers
+    stage = app.stage;
+
     //init our HUD containers for different game states
     titleScene = new PIXI.Container();
     howToPlayScene = new PIXI.Container();
@@ -148,6 +151,12 @@ function setupHowToPlay() {
     // Adding a stage background
     howToPlayScene.addChild(createSprite('../media/background-panel.jpg', 0.5, 0.5, 512, 288));
 
+    // Creating the logo
+    let logo = createSprite('../media/how-to-play-logo.png', 0, 0, 170, 50);
+    logo.width = 400;
+    logo.height = 80;
+    howToPlayScene.addChild(logo);
+
     let buttonStyle = new PIXI.TextStyle({
         fill: 0xffeb0b,
         fontSize: 48,
@@ -158,9 +167,26 @@ function setupHowToPlay() {
         dropShadowDistance: 1
     });
 
+    let textStyle = new PIXI.TextStyle({
+        fill: 0x000000,
+        fontSize: 24,
+        fontFamily: "Amaranth",
+    });
+
+    howToPlayScene.addChild(createText("Drag your mouse between segments of the same color to", 75, 150, textStyle));
+    howToPlayScene.addChild(createText("make a match! You can also press Q and E to rotate hexes.", 75, 170, textStyle));
+    howToPlayScene.addChild(createText("Make bigger matches for better scores. You can also draw", 75, 210, textStyle));
+    howToPlayScene.addChild(createText("certain patterns for unique effects!", 75, 230, textStyle));
+
     // Creating the buttons
-    let playButton = createStateButton("Back to Menu", 75, 180, 0, buttonStyle);
+    let playButton = createStateButton("Back to Menu", 75, 500, 0, buttonStyle);
     howToPlayScene.addChild(playButton);
+
+    howToPlayScene.addChild(new Hexagon(getScreenSpaceX(3), getScreenSpaceY(3), 3, 3, hexRadius, Math.trunc(Math.random() * 6), null, null));
+    howToPlayScene.addChild(new Hexagon(getScreenSpaceX(5), getScreenSpaceY(3), 5, 3, hexRadius, Math.trunc(Math.random() * 6), null, null));
+    howToPlayScene.addChild(new Hexagon(getScreenSpaceX(7), getScreenSpaceY(3), 5, 3, hexRadius, Math.trunc(Math.random() * 6), null, null));
+    howToPlayScene.addChild(new Hexagon(getScreenSpaceX(4), getScreenSpaceY(4), 3, 3, hexRadius, Math.trunc(Math.random() * 6), null, null));
+    howToPlayScene.addChild(new Hexagon(getScreenSpaceX(6), getScreenSpaceY(4), 5, 3, hexRadius, Math.trunc(Math.random() * 6), null, null));
 
     app.stage.addChild(howToPlayScene);
 }
@@ -172,9 +198,6 @@ function setUpGame() {
     window.addEventListener("keyup", keysUp);
 
     hexPath = [];
-    //set up our scenes/containers
-    stage = app.stage;
-
     // Adding a stage background
     gameScene.addChild(createSprite('../media/background-panel.jpg', 0.5, 0.5, 512, 288));
 
@@ -331,6 +354,16 @@ function createStateButton(text, x, y, targetState, style = buttonStyle) {
     //if the user unhovers this button, return alpha back to normal
     button.on('pointerout', e => e.currentTarget.alpha = 1.0);
     return button;
+}
+
+function createText(text, x, y, style) {
+    //store the text and position values
+    let textItem = new PIXI.Text(text);
+    textItem.style = style;
+    textItem.x = x;
+    textItem.y = y;
+    textItem.anchor.set(0, .5);
+    return textItem;
 }
 
 // Creates a Sprite
