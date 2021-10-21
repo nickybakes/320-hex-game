@@ -2,7 +2,9 @@
 const app = new PIXI.Application({
     width: 1024,
     height: 576,
-    antialias: true
+    antialias: true,
+    autoDensity: true, // !!!
+    resolution: 2,
 });
 document.body.appendChild(app.view);
 
@@ -60,12 +62,12 @@ let rotationCoolDownMax = .2;
 let startTimeInSec = 30;
 let currentTimeInSec = startTimeInSec;
 let gameStarted = false;
-let timeTracker = new PIXI.Text('timer', {fill: 0xffffff});
+let timeTracker = new PIXI.Text('timer', { fill: 0xffffff });
 timeTracker.x = 900;
 
 let score = 0;
 let scoreString = 'score: ';
-let scoreTracker = new PIXI.Text('score: ' + score, {fill: 0xffffff});
+let scoreTracker = new PIXI.Text('score: ' + score, { fill: 0xffffff });
 //timeTracker.x = 800;
 //timeTracker.y = 200;
 
@@ -90,7 +92,21 @@ let columnWaitAmount = [];
 
 let displacementSprite;
 let displacementFilter;
+let hexDisplacementSprite;
+let hexRefractionSprite;
+let hexRefractionGraphic;
 let bloomFilter;
+
+let hexRefractionMaskContainer;
+let hexRefractionMaskSprite;
+
+let hexRefractionGraphics = [];
+let hexRefractionMasks = [];
+
+let hexMaskTexture;
+let hexMaskGraphic;
+
+let maskedHexRefractionGraphic;
 
 //objects that store the states of user's input/controls
 let mousePosition;
@@ -116,11 +132,11 @@ function setupScenes() {
 
     //store our scenes for easy access later
     scenes = [titleScene, howToPlayScene, gameScene, pauseScene, endGameScene];
-    setUpTitle();
-    setupHowToPlay();
+    //setUpTitle();
+    //setupHowToPlay();
     setUpGame();
-    setUpPause();
-    setUpEnd();
+    //setUpPause();
+    //setUpEnd();
 }
 
 // Initialization for the Title screen
@@ -217,12 +233,19 @@ function setUpGame() {
     gameScene = new PIXI.Container();
 
     bloomFilter = new PIXI.filters.AdvancedBloomFilter();
-    bloomFilter.quality = 10;
-    bloomFilter.bloomScale = .5;
+    bloomFilter.quality = 5;
+    bloomFilter.bloomScale = 1;
+    bloomFilter.brightness = 1.1;
+    bloomFilter.padding = 10;
+
 
     hexPath = [];
     // Adding a stage background
-    gameScene.addChild(createSprite('../media/background-panel.jpg', 0.5, 0.5, 512, 288));
+    //gameScene.addChild(createSprite('../media/background-panel.jpg', 0.5, 0.5, 512, 288));
+
+    hexDisplacementSprite = PIXI.Sprite.from('media/hex-displacement.jpg');
+    // hexMaskTexture = PIXI.Texture.from('media/hex-mask.jpg');
+    // hexRefractionSprite = PIXI.Texture.from('media/hex-gem-refraction.png');
 
     populateHexGrid();
 
@@ -230,6 +253,43 @@ function setUpGame() {
     for (let i = 0; i < hexGridWidth / 2; i++) {
         columnWaitAmount.push(0);
     }
+    // hexRefractionMaskContainer = new PIXI.Container();
+    // //set up masks for refraction effect
+    // for (let i = 0; i < hexArray.length; i++) {
+    //     let hexMaskGraphic = new PIXI.Sprite(hexMaskTexture);
+    //     hexMaskGraphic.anchor.x = .5;
+    //     hexMaskGraphic.anchor.y = .5;
+    //     hexMaskGraphic.scale.x = .5;
+    //     hexMaskGraphic.scale.y = .5;
+    //     gameScene.addChild(hexMaskGraphic);
+    //     hexRefractionMaskContainer.addChild(hexMaskGraphic);
+    //     hexRefractionMasks.push(hexMaskGraphic);
+    // }
+    // hexRefractionMaskSprite = new PIXI.Sprite(app.renderer.generateTexture(hexRefractionMaskContainer));
+
+    // maskedHexRefractionGraphic = new PIXI.Sprite();
+
+    // let hexRefractionScaleFactor = .5;
+    // hexRefractionGraphic = new PIXI.TilingSprite(hexRefractionSprite, 1024 / hexRefractionScaleFactor, 576 / hexRefractionScaleFactor);
+    // hexRefractionGraphic.scale.x = hexRefractionScaleFactor;
+    // hexRefractionGraphic.scale.y = hexRefractionScaleFactor;
+    // hexRefractionGraphic.alpha = .15;
+    // hexRefractionGraphic.blendMode = PIXI.BLEND_MODES.NORMAL;
+    // gameScene.addChild(hexRefractionGraphic);
+    // gameScene.addChild(maskedHexRefractionGraphic);
+    //set up graphics for refractions/holographic look
+    // for (let i = 0; i < hexArray.length; i++) {
+    //     let hexRefractionGraphic = new PIXI.TilingSprite(hexRefractionSprite, 100, 100);
+    //     hexRefractionGraphic.anchor.x = .5;
+    //     hexRefractionGraphic.anchor.y = .5;
+    //     hexRefractionGraphic.scale.x = hexRefractionScaleFactor;
+    //     hexRefractionGraphic.scale.y = hexRefractionScaleFactor;
+    //     hexRefractionGraphic.alpha = .15;
+    //     hexRefractionGraphic.blendMode = PIXI.BLEND_MODES.NORMAL;
+    //     gameScene.addChild(hexRefractionGraphic);
+    //     hexRefractionGraphics.push(hexRefractionGraphic);
+    //     hexRefractionGraphic.mask = hexRefractionMasks[i];
+    // }
 
     pathIndicator = new PathIndicator();
     gameScene.addChild(pathIndicator);
@@ -428,7 +488,20 @@ function updateLoop() {
     //get our mouse position
     mousePosition = app.renderer.plugins.interaction.mouse.global;
 
-    if(wrongMoveIndicator.currentBlinkAmount < wrongMoveIndicator.currentBlinkAmountMax){
+    // for (let i = 0; i < hexRefractionMasks.length; i++) {
+    //     hexRefractionMasks[i].x = hexArray[i].x;
+    //     hexRefractionMasks[i].y = hexArray[i].y;
+    //     //hexRefractionGraphics[i].x = hexArray[i].x;
+    //     //hexRefractionGraphics[i].y = hexArray[i].y;
+    // }
+
+    // hexRefractionMaskSprite = new PIXI.Sprite(app.renderer.generateTexture(hexRefractionMaskContainer));
+
+    // hexRefractionGraphic.mask = hexRefractionMaskSprite;
+
+    //maskedHexRefractionGraphic = new PIXI.Sprite(app.renderer.generateTexture(hexRefractionGraphic));
+
+    if (wrongMoveIndicator.currentBlinkAmount < wrongMoveIndicator.currentBlinkAmountMax) {
         wrongMoveIndicator.update();
     }
 
@@ -487,7 +560,7 @@ function updateLoop() {
     if (highlightedHex != null && !keysHeld["87"] && keysReleased["87"]) {
         console.log(highlightedHex.hexagonValues);
         console.log("x: " + highlightedHex.posX + ", y: " + highlightedHex.posY);
-        console.log(highlightedHex.wantedRotationValue);
+        console.log(lerp(0, 255, highlightedHex.highlightOutlineBlinkValue));
     }
 
     //adds destroyed hexs to graveyard
@@ -533,9 +606,9 @@ function updateLoop() {
     }
 
     // change to only decrease on first click
-    if(gameStarted){
+    if (gameStarted) {
         currentTimeInSec -= dt;
-        if(currentTimeInSec <= 0){
+        if (currentTimeInSec <= 0) {
             currentTimeInSec = 0;
             // END GAME
         }
@@ -598,7 +671,7 @@ function onDragEnd(e) {
     console.log("Drag End (for whole window)");
     let completePath = compareHexes(hexPath);
     if (completePath) {
-        detectShape(hexPath);   
+        detectShape(hexPath);
         //start the hex breaking animation
         hexBreakAnimationTime = hexBreakAnimationTimeMax;
         hexBreakAnimationTimeMaxPerHex = hexBreakAnimationTimeMax / hexPath.length;
@@ -623,7 +696,7 @@ function onDragEnd(e) {
         pathIndicator.clear();
     } else {
         //if the path is wrong in any way
-        if(hexPath.length > 1){
+        if (hexPath.length > 1) {
             wrongMoveIndicator.x = getScreenSpaceX(wrongMovePositionAndDirection.posX + (wrongMovePositionAndDirection.directionX / 2));
             wrongMoveIndicator.y = getScreenSpaceY(wrongMovePositionAndDirection.posY + (wrongMovePositionAndDirection.directionY / 2));
             wrongMoveIndicator.currentBlinkAmount = 0;

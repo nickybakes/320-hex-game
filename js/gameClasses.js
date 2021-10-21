@@ -34,11 +34,16 @@ class Hexagon extends PIXI.Graphics {
     belowY;
     belowPosX;
 
+    hexDisplacementFilter;
+
+    highlightOutlineBlinkTime;
+    highlightOutlineBlinkTimeMax = 1;
+    highlightOutlineValue;
 
     //stores values of hexagon
     hexagonValues;
 
-    colorsRGB = [{ r: 255, g: 0, b: 0 }, { r: 245, g: 139, b: 0 }, { r: 255, g: 208, b: 0 }, { r: 0, g: 145, b: 0 }, { r: 0, g: 110, b: 255 }, { r: 116, g: 0, b: 184 }];
+    colorsRGB = [{ r: 158, g: 0, b: 0 }, { r: 189, g: 88, b: 0 }, { r: 191, g: 188, b: 0 }, { r: 0, g: 89, b: 0 }, { r: 0, g: 62, b: 196 }, { r: 78, g: 0, b: 99 }];
     colorIndices;
 
     //inits this hexagon and stores its values
@@ -68,6 +73,9 @@ class Hexagon extends PIXI.Graphics {
 
         this.dragFunction = dragFunction;
         this.endDragFunction = endDragFunction;
+
+        this.hexDisplacementFilter = new PIXI.filters.DisplacementFilter(hexDisplacementSprite, 0);
+        this.filters = [this.hexDisplacementFilter];
     }
 
     randomizeColors() {
@@ -77,7 +85,7 @@ class Hexagon extends PIXI.Graphics {
         this.colorIndices = [];
         this.hexagonValues = [];
         this.colorIndices = [Math.trunc(Math.random() * 6), Math.trunc(Math.random() * 6), Math.trunc(Math.random() * 6)];
-   
+
 
         //This part assigns hexagonValues a value
         this.hexagonValues = [this.colorIndices[0], this.colorIndices[0], this.colorIndices[1], this.colorIndices[1], this.colorIndices[2], this.colorIndices[2]];
@@ -124,6 +132,22 @@ class Hexagon extends PIXI.Graphics {
         if (hexFallAnimationTime > 0)
             return;
 
+        if (highlightedHex == this) {
+            this.hexDisplacementFilter.scale.x = (mousePosition.x - this.x) / 15;
+            this.hexDisplacementFilter.scale.y = (mousePosition.y - this.y) / 15;
+            if (this.highlightOutlineBlinkTime > 0) {
+                this.highlightOutlineBlinkTime -= frameTime;
+                this.highlightOutlineBlinkValue = Math.sin(rad(180 * (this.highlightOutlineBlinkTime / this.highlightOutlineBlinkTimeMax)));
+            }
+
+            if (this.highlightOutlineBlinkTime <= 0) {
+                this.highlightOutlineBlinkTime = this.highlightOutlineBlinkTimeMax;
+            }
+
+            this.clear();
+            this.drawHex();
+        }
+
         if (this.currentRotationVelocity > 0 && this.wantedRotationValue - this.rotationValue > 0) {
             this.rotationValue += this.currentRotationVelocity * frameTime;
             this.clear();
@@ -142,9 +166,6 @@ class Hexagon extends PIXI.Graphics {
             this.rotationValue = moveIntoRange(this.rotationValue, 0, 6);
             this.wantedRotationValue = this.rotationValue;
 
-            // this.hexagonValues.unshift(this.hexagonValues[this.hexagonValues.length - 1]);
-            // this.hexagonValues.pop();
-
             this.clear();
             this.drawHex();
         }
@@ -154,9 +175,6 @@ class Hexagon extends PIXI.Graphics {
 
             this.rotationValue = moveIntoRange(this.rotationValue, 0, 6);
             this.wantedRotationValue = this.rotationValue;
-
-            // this.hexagonValues.push(this.hexagonValues[0]);
-            // this.hexagonValues.shift();
 
             this.clear();
             this.drawHex();
@@ -168,22 +186,106 @@ class Hexagon extends PIXI.Graphics {
 
     drawHex() {
         this.beginFill();
+        this.lineStyle(0);
+        let bevelStartRadius = this.radius * .87;
 
         for (let i = 0; i < 6; i++) {
-            let brightness = Math.abs(moveIntoRange((i + this.rotationValue), -3, 3)) * 65 + 40;
+            if(this.highlighted){
+                
+                this.beginFill(rgbToHex(255, lerp(0, 255, this.highlightOutlineBlinkValue), lerp(72, 255, this.highlightOutlineBlinkValue)));
+                this.drawPolygon([
+                    Math.sin(rad(60 * (i + this.rotationValue))) * (this.radius + 3), Math.cos(rad(60 * (i + this.rotationValue))) * (this.radius + 3),
+                    Math.sin(rad(60 * (i + 1 + this.rotationValue))) * (this.radius + 3), Math.cos(rad(60 * (i + 1 + this.rotationValue))) * (this.radius + 3),
+                    0, 0,
+                ])
+                this.endFill;
+            }
+
+            let brightnessEdge = Math.abs(moveIntoRange((i + this.rotationValue), -3, 3)) * 75 + 40;
+            let brightnessClockWise = Math.abs(moveIntoRange((i + this.rotationValue) - 2, -3, 3)) * 75 + 20;
+            let brightnessCounterClockWise = Math.abs(moveIntoRange((i + this.rotationValue) + 2, -3, 3)) * 75 + 20;
             let color = this.colorsRGB[this.colorIndices[Math.trunc(i / 2)]];
-            let bevelColor = rgbToHex(color.r + (brightness - 128) * 1.6, color.g + (brightness - 128) * 1.6, color.b + (brightness - 128) * 1.6);
-            this.lineStyle(1, bevelColor);
-            this.beginFill(rgbToHex(color.r + (brightness - 128) * 0, color.g + (brightness - 128) * 0, color.b + (brightness - 128) * 0));
+
+            let bevelEdgeColor = rgbToHex(color.r + (brightnessEdge - 128) * 1.6, color.g + (brightnessEdge - 128) * 1.6, color.b + (brightnessEdge - 128) * 1.6);
+            let bevelClockwiseColor = rgbToHex(color.r + (brightnessClockWise - 128) * 1.6, color.g + (brightnessClockWise - 128) * 1.6, color.b + (brightnessClockWise - 128) * 1.6);
+            let bevelCounterClockwiseColor = rgbToHex(color.r + (brightnessCounterClockWise - 128) * 1.6, color.g + (brightnessCounterClockWise - 128) * 1.6, color.b + (brightnessCounterClockWise - 128) * 1.6);
+
+            //draw base triangle
+            this.beginFill(rgbToHex(color.r * 1, color.g * .9, color.b * .9));
             this.drawPolygon([
                 Math.sin(rad(60 * (i + this.rotationValue))) * this.radius, Math.cos(rad(60 * (i + this.rotationValue))) * this.radius,
                 Math.sin(rad(60 * (i + 1 + this.rotationValue))) * this.radius, Math.cos(rad(60 * (i + 1 + this.rotationValue))) * this.radius,
                 0, 0,
             ])
             this.endFill;
-            this.lineStyle(3, bevelColor);
-            this.moveTo(Math.sin(rad(60 * (i + this.rotationValue))) * this.radius, Math.cos(rad(60 * (i + this.rotationValue))) * this.radius)
-                .lineTo(Math.sin(rad(60 * (i + 1 + this.rotationValue))) * this.radius, Math.cos(rad(60 * (i + 1 + this.rotationValue))) * this.radius);
+
+
+            if (i % 2 == 0) {
+                //draw edge bevel
+                this.beginFill(bevelEdgeColor);
+                this.drawPolygon([
+                    Math.sin(rad(60 * (i + this.rotationValue))) * this.radius, Math.cos(rad(60 * (i + this.rotationValue))) * this.radius,
+                    Math.sin(rad(60 * (i + 1 + this.rotationValue))) * this.radius, Math.cos(rad(60 * (i + 1 + this.rotationValue))) * this.radius,
+                    Math.sin(rad(60 * (i + 1 + this.rotationValue))) * (bevelStartRadius + 2), Math.cos(rad(60 * (i + 1 + this.rotationValue))) * (bevelStartRadius + 2),
+                    Math.sin(rad(60 * (i + this.rotationValue + .08))) * bevelStartRadius, Math.cos(rad(60 * (i + this.rotationValue + .08))) * bevelStartRadius,
+                ])
+                this.endFill;
+
+                //draw clockwise edge bevel
+                this.beginFill(bevelClockwiseColor);
+                this.drawPolygon([
+                    Math.sin(rad(60 * (i + this.rotationValue))) * this.radius, Math.cos(rad(60 * (i + this.rotationValue))) * this.radius,
+                    0, 0,
+                    Math.sin(rad(60 * (i + this.rotationValue + 1))) * (this.radius - bevelStartRadius - 2), Math.cos(rad(60 * (i + this.rotationValue + 1))) * (this.radius - bevelStartRadius - 2),
+                    Math.sin(rad(60 * (i + this.rotationValue + .08))) * bevelStartRadius, Math.cos(rad(60 * (i + this.rotationValue + .08))) * bevelStartRadius,
+                ])
+                this.endFill;
+
+                //draw counter clockwise edge bevel
+                this.beginFill(bevelCounterClockwiseColor);
+                this.drawPolygon([
+                    Math.sin(rad(60 * (i + 1 + this.rotationValue))) * this.radius, Math.cos(rad(60 * (i + 1 + this.rotationValue))) * this.radius,
+                    0, 0,
+                    Math.sin(rad(60 * (i + 1 + this.rotationValue - .1))) * (this.radius - bevelStartRadius), Math.cos(rad(60 * (i + 1 + this.rotationValue - .1))) * (this.radius - bevelStartRadius),
+                    Math.sin(rad(60 * (i + 1 + this.rotationValue - .03))) * bevelStartRadius, Math.cos(rad(60 * (i + 1 + this.rotationValue - .03))) * bevelStartRadius,
+                ])
+                this.endFill;
+            } else {
+                //draw edge bevel
+                this.beginFill(bevelEdgeColor);
+                this.drawPolygon([
+                    Math.sin(rad(60 * (i + this.rotationValue))) * this.radius, Math.cos(rad(60 * (i + this.rotationValue))) * this.radius,
+                    Math.sin(rad(60 * (i + 1 + this.rotationValue))) * this.radius, Math.cos(rad(60 * (i + 1 + this.rotationValue))) * this.radius,
+                    Math.sin(rad(60 * (i + 1 + this.rotationValue))) * (bevelStartRadius + 2), Math.cos(rad(60 * (i + 1 + this.rotationValue))) * (bevelStartRadius + 2),
+                    Math.sin(rad(60 * (i + this.rotationValue))) * (bevelStartRadius + 2), Math.cos(rad(60 * (i + this.rotationValue))) * (bevelStartRadius + 2),
+                ])
+                this.endFill;
+
+                //draw clockwise edge bevel
+                this.beginFill(bevelClockwiseColor);
+                this.drawPolygon([
+                    Math.sin(rad(60 * (i + this.rotationValue))) * this.radius, Math.cos(rad(60 * (i + this.rotationValue))) * this.radius,
+                    0, 0,
+                    Math.sin(rad(60 * (i + this.rotationValue + .1))) * (this.radius - bevelStartRadius), Math.cos(rad(60 * (i + this.rotationValue + .1))) * (this.radius - bevelStartRadius),
+                    Math.sin(rad(60 * (i + this.rotationValue + .03))) * bevelStartRadius, Math.cos(rad(60 * (i + this.rotationValue + .03))) * bevelStartRadius,
+                ])
+                this.endFill;
+
+                //draw counter clockwise edge bevel
+                this.beginFill(bevelCounterClockwiseColor);
+                this.drawPolygon([
+                    Math.sin(rad(60 * (i + 1 + this.rotationValue))) * this.radius, Math.cos(rad(60 * (i + 1 + this.rotationValue))) * this.radius,
+                    0, 0,
+                    Math.sin(rad(60 * (i + this.rotationValue))) * (this.radius - bevelStartRadius - 2), Math.cos(rad(60 * (i + this.rotationValue))) * (this.radius - bevelStartRadius - 2),
+                    Math.sin(rad(60 * (i + 1 + this.rotationValue - .08))) * bevelStartRadius, Math.cos(rad(60 * (i + 1 + this.rotationValue - .08))) * bevelStartRadius,
+                ])
+                this.endFill;
+            }
+
+
+            // this.lineStyle(3, bevelEdgeColor);
+            // this.moveTo(Math.sin(rad(60 * (i + this.rotationValue))) * this.radius, Math.cos(rad(60 * (i + this.rotationValue))) * this.radius)
+            //     .lineTo(Math.sin(rad(60 * (i + 1 + this.rotationValue))) * this.radius, Math.cos(rad(60 * (i + 1 + this.rotationValue))) * this.radius);
         }
 
         this.endFill();
@@ -195,8 +297,9 @@ class Hexagon extends PIXI.Graphics {
         //"select" this hex
         highlightedHex = this;
         this.highlighted = true;
+        this.highlightOutlineBlinkTime = this.highlightOutlineBlinkTimeMax;
         //visually highlight the hex
-        e.target.alpha = 1.3;
+        //e.target.alpha = 1.5;
 
         if (hexFallAnimationTime > 0 || hexBreakAnimationTime > 0)
             return;
@@ -221,16 +324,23 @@ class Hexagon extends PIXI.Graphics {
                 hexPath.length = indexOfHexInPath + 1;
             }
         }
+        this.clear();
+        this.drawHex();
     }
 
     onMouseLeave(e) {
         highlightedHex = null;
         this.highlighted = false;
-        e.currentTarget.alpha = 1.0;
+        //e.currentTarget.alpha = 1.0;
+
+        this.hexDisplacementFilter.scale.x = 0;
+        this.hexDisplacementFilter.scale.y = 0;
 
         if (this == dragStartHex) {
             connectPathToStart = false;
         }
+        this.clear();
+        this.drawHex();
     }
 
 
@@ -510,7 +620,7 @@ class HexBreakParticleSystem extends PIXI.Graphics {
             brokenPiece.x += brokenPiece.velX * frameTime;
             brokenPiece.y += brokenPiece.velY * frameTime;
 
-            if (brokenPiece.brightness >= 150 || brokenPiece.brightness <= -150){
+            if (brokenPiece.brightness >= 150 || brokenPiece.brightness <= -150) {
                 brokenPiece.brightness = clamp(brokenPiece.brightness, -148, 148);
                 brokenPiece.brightnessFlashSpeed = -brokenPiece.brightnessFlashSpeed;
             }
