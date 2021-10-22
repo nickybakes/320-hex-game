@@ -95,14 +95,14 @@ class Hexagon extends PIXI.Graphics {
     }
 
     // Helper function to explicitly define hex colors, used in tutorial section
-    setColors(color1, color2, color3) {
-        this.rotationValue = Math.trunc(Math.random() * 6);
+    setColorsAndRotation(color1, color2, color3, rotation) {
+        this.rotationValue = rotation;
         this.rotationValue = moveIntoRange(this.rotationValue, 0, 6);
         this.wantedRotationValue = this.rotationValue;
         this.colorIndices = [];
         this.hexagonValues = [];
         this.colorIndices = [color1, color2, color3];
-   
+
 
         //This part assigns hexagonValues a value
         this.hexagonValues = [this.colorIndices[0], this.colorIndices[0], this.colorIndices[1], this.colorIndices[1], this.colorIndices[2], this.colorIndices[2]];
@@ -297,6 +297,21 @@ class Hexagon extends PIXI.Graphics {
                     Math.sin(rad(60 * (i + 1 + this.rotationValue - .08))) * bevelStartRadius, Math.cos(rad(60 * (i + 1 + this.rotationValue - .08))) * bevelStartRadius,
                 ])
                 this.endFill;
+
+                let iconIndex = this.colorIndices[Math.trunc(i / 2)];
+
+                if (iconIndex == 5){
+                    this.beginFill(bevelCounterClockwiseColor);
+                    let circleCenterX = Math.sin(rad(60 * (i + this.rotationValue))) * (this.radius / 2);
+                    let circleCenterY = Math.cos(rad(60 * (i + this.rotationValue))) * (this.radius / 2);
+                    this.drawEllipse(circleCenterX, circleCenterY, 14, 5);
+                    this.drawPolygon([
+                        circleCenterX - 6, circleCenterY,
+                        circleCenterX + 6, circleCenterY,
+                        circleCenterX, circleCenterY - 16,
+                    ])
+                    this.endFill;
+                }
             }
 
 
@@ -491,7 +506,7 @@ class PathIndicator extends PIXI.Graphics {
         //         cap: 'round'
         //     });
         // }
-        
+
         this.lineStyle({
             width: this.lineWidth,
             color: this.lineColor,

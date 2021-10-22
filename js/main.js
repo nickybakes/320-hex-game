@@ -111,20 +111,26 @@ let displacementSprite2;
 let displacementFilter;
 let displacementFilter2;
 let hexDisplacementSprite;
-let hexRefractionSprite;
-let hexRefractionGraphic;
 let bloomFilter;
+let backgroundRefractionSprite;
+let backgroundRefractionGraphic;
 
-let hexRefractionMaskContainer;
-let hexRefractionMaskSprite;
+let backgroundOverlaySprite;
+let backgroundOverlayGraphic;
 
-let hexRefractionGraphics = [];
-let hexRefractionMasks = [];
 
-let hexMaskTexture;
-let hexMaskGraphic;
+// let hexRefractionSprite;
+// let hexRefractionGraphic;
+// let hexRefractionMaskContainer;
+// let hexRefractionMaskSprite;
 
-let maskedHexRefractionGraphic;
+// let hexRefractionGraphics = [];
+// let hexRefractionMasks = [];
+
+// let hexMaskTexture;
+// let hexMaskGraphic;
+
+// let maskedHexRefractionGraphic;
 
 //objects that store the states of user's input/controls
 let mousePosition;
@@ -133,7 +139,7 @@ let keysHeld = [];
 let keysReleased = [];
 
 // Style objects for menu states used in multiple scenes
-const buttonStyle = new PIXI.TextStyle({
+const buttonStyleLarge = new PIXI.TextStyle({
     fill: 0xffeb0b,
     fontSize: 60,
     fontFamily: "Amaranth",
@@ -142,11 +148,29 @@ const buttonStyle = new PIXI.TextStyle({
     dropShadowBlur: 5,
     dropShadowDistance: 1
 });
+const buttonStyleMedium = new PIXI.TextStyle({
+    fill: 0xffeb0b,
+    fontSize: 39,
+    fontFamily: "Amaranth",
+    dropShadow: true,
+    dropShadowAlpha: 1,
+    dropShadowBlur: 5,
+    dropShadowDistance: 1
+});
 const textStyle = new PIXI.TextStyle({
-    fill: 0x000000,
+    fill: 0xffd900,
     fontSize: 24,
     fontFamily: "Amaranth",
 });
+const textStyle2 = new PIXI.TextStyle({
+    fill: 0xffffff,
+    fontSize: 24,
+    fontFamily: "Amaranth",
+});
+
+let howToPlayTextPopup1;
+let howToPlayTextPopup2;
+let howToPlayTextPopup3;
 
 //once finished, call the setUpGame function
 app.loader.onComplete.add(setupScenes);
@@ -165,8 +189,49 @@ function setupScenes() {
     pauseScene = new PIXI.Container();
     endGameScene = new PIXI.Container();
 
+    bloomFilter = new PIXI.filters.AdvancedBloomFilter();
+    bloomFilter.quality = 5;
+    bloomFilter.bloomScale = 1;
+    bloomFilter.brightness = 1.1;
+    bloomFilter.padding = 20;
+    app.stage.filters = [bloomFilter];
+
+    backgroundOverlaySprite = createSprite('../media/background-panel.png', 0.5, 0.5, 512, 288);
+
+    backgroundRefractionSprite = PIXI.Texture.from('media/background-refraction-pattern.jpg');
+    backgroundRefractionGraphic = new PIXI.TilingSprite(backgroundRefractionSprite, 1024, 576);
+    backgroundRefractionGraphic.alpha = .1;
+
+    app.stage.addChild(backgroundRefractionGraphic);
+
+    displacementSprite = PIXI.Sprite.from('media/displacement-map-tiling.jpg');
+    displacementSprite2 = PIXI.Sprite.from('media/hex-gem-refraction.png');
+    // Make sure the sprite is wrapping.
+    displacementSprite.texture.baseTexture.wrapMode = PIXI.WRAP_MODES.REPEAT;
+    displacementFilter = new PIXI.filters.DisplacementFilter(displacementSprite);
+    displacementFilter.padding = 60;
+
+    displacementSprite2.texture.baseTexture.wrapMode = PIXI.WRAP_MODES.REPEAT;
+    displacementFilter2 = new PIXI.filters.DisplacementFilter(displacementSprite2);
+    displacementFilter2.padding = 60;
+
+    displacementFilter.scale.x = 17;
+    displacementFilter.scale.y = 17;
+
+    displacementFilter2.scale.x = 13;
+    displacementFilter2.scale.y = 13;
+
+    app.stage.addChild(displacementSprite2);
+    app.stage.addChild(displacementSprite);
+
+    pathIndicator2 = new PathIndicator(16, .3, 0x969696);
+    pathIndicator = new PathIndicator();
+
+    pathIndicator.filters = [displacementFilter];
+    pathIndicator2.filters = [displacementFilter2];
+
     //store our scenes for easy access later
-    
+
     setUpTitle();
     setUpMode();
     setUpGame();
@@ -194,7 +259,7 @@ function setUpTitle() {
     // This stuff has hardcoded locations, which I need to fix later
 
     // Adding a stage background
-    titleScene.addChild(createSprite('../media/background-panel.jpg', 0.5, 0.5, 512, 288));
+    titleScene.addChild(createSprite('../media/background-panel.png', 0.5, 0.5, 512, 288));
 
     // Creating the logo
     let logo = createSprite('../media/main-logo.png', 0, 0, 120, 50);
@@ -224,7 +289,7 @@ function setupHowToPlay() {
     // demoHexPath = [];
 
     // Adding a stage background
-    howToPlayScene.addChild(createSprite('../media/background-panel.jpg', 0.5, 0.5, 512, 288));
+    howToPlayScene.addChild(createSprite('../media/background-panel.png', 0.5, 0.5, 512, 288));
 
     // Creating the logo
     let logo = createSprite('../media/how-to-play-logo.png', 0, 0, 170, 50);
@@ -237,15 +302,26 @@ function setupHowToPlay() {
     howToPlayScene.addChild(createText("Make bigger matches for better scores. You can also draw", 75, 210, textStyle));
     howToPlayScene.addChild(createText("certain patterns for unique effects!", 75, 230, textStyle));
     howToPlayScene.addChild(createText("Try finding a way to connect all 3 of these hexes with a path!", 75, 270, textStyle));
+    //"Try to get ALL THREE in one go!";
+    //The colors only need to match between 2 adjacent segments.
+    howToPlayTextPopup1 = createText("Try to get ALL THREE in one go!", 190, 410, textStyle2);
+    howToPlayTextPopup2 = createText("Remember: the colors only need to match between", 75, 440, textStyle2);
+    howToPlayTextPopup3 = createText("adjacent segments.", 75, 470, textStyle2);
+    howToPlayTextPopup1.alpha = 0;
+    howToPlayTextPopup2.alpha = 0;
+    howToPlayTextPopup3.alpha = 0;
+    howToPlayScene.addChild(howToPlayTextPopup1);
+    howToPlayScene.addChild(howToPlayTextPopup2);
+    howToPlayScene.addChild(howToPlayTextPopup3);
 
-    let demoHex1 = new Hexagon(getScreenSpaceX(3), getScreenSpaceY(3), 2, 3, hexRadius, 1, null, null);
-    demoHex1.setColors(3, 1, 2);
+    let demoHex1 = new Hexagon(getScreenSpaceX(3), getScreenSpaceY(3), 3, 3, hexRadius, 1, null, null);
+    demoHex1.setColorsAndRotation(3, 1, 2, 0);
     demoHexArray.push(demoHex1);
-    let demoHex2 = new Hexagon(getScreenSpaceX(5), getScreenSpaceY(3), 4, 3, hexRadius, 3, null, null);
-    demoHex2.setColors(2, 1, 1);
+    let demoHex2 = new Hexagon(getScreenSpaceX(5), getScreenSpaceY(3), 5, 3, hexRadius, 3, null, null);
+    demoHex2.setColorsAndRotation(2, 4, 1, 0);
     demoHexArray.push(demoHex2);
-    let demoHex3 = new Hexagon(getScreenSpaceX(7), getScreenSpaceY(3), 6, 3, hexRadius, 2, null, null);
-    demoHex3.setColors(3, 2, 1);
+    let demoHex3 = new Hexagon(getScreenSpaceX(7), getScreenSpaceY(3), 7, 3, hexRadius, 2, null, null);
+    demoHex3.setColorsAndRotation(3, 2, 4, 0);
     demoHexArray.push(demoHex3);
     howToPlayScene.addChild(demoHex1);
     howToPlayScene.addChild(demoHex2);
@@ -253,7 +329,7 @@ function setupHowToPlay() {
     // titleScene.addChild(new Hexagon(getScreenSpaceX(6), getScreenSpaceY(4), 5, 3, hexRadius, Math.trunc(Math.random() * 6), null, null));
 
     // Creating the buttons
-    let playButton = createStateButton("Back to Menu", 75, 500, titleState, buttonStyle);
+    let playButton = createStateButton("Back to Menu", 75, 540, titleState, buttonStyleMedium);
     howToPlayScene.addChild(playButton);
 
     // for falling
@@ -261,9 +337,6 @@ function setupHowToPlay() {
     //     columnWaitAmount.push(0);
     // }
 
-    howToPlayScene.addChild(pathIndicator);
-    howToPlayScene.addChild(displacementSprite);
-    howToPlayScene.addChild(wrongMoveIndicator);
 
     app.stage.addChild(howToPlayScene);
 
@@ -274,7 +347,7 @@ function setupHowToPlay() {
 // Initialization for the Mode screen
 function setUpMode() {
     // Adding a stage background
-    modeScene.addChild(createSprite('../media/background-panel.jpg', 0.5, 0.5, 512, 288));
+    modeScene.addChild(createSprite('../media/background-panel.png', 0.5, 0.5, 512, 288));
 
     // Creating the logo
     let logo = createSprite('../media/mode-logo.png', 0, 0, 120, 50);
@@ -283,13 +356,15 @@ function setUpMode() {
     modeScene.addChild(logo);
 
     // Creating the buttons
-    let playTimedButton = createStateButton("TIMED", 300, 220, gameState, buttonStyle);
+    let playTimedButton = createStateButton("TIMED", 140, 250, gameState, buttonStyleLarge);
     // tweak the state button's onpointerup to change the current mode
-    playTimedButton.on('pointerup', function (e) { setGameState(gameState); currentMode = timedMode;});
+    playTimedButton.on('pointerup', function (e) { setGameState(gameState); currentMode = timedMode; });
     modeScene.addChild(playTimedButton);
-    let playEndlessButton = createStateButton("ENDLESS", 270, 280, 1, buttonStyle);
-    playEndlessButton.on('pointerup', function (e) { setGameState(gameState); currentMode = endlessMode;});
+    modeScene.addChild(createText("Frantic & Fun", 156, 300, textStyle));
+    let playEndlessButton = createStateButton("ENDLESS", 400, 250, 1, buttonStyleLarge);
+    playEndlessButton.on('pointerup', function (e) { setGameState(gameState); currentMode = endlessMode; });
     modeScene.addChild(playEndlessButton);
+    modeScene.addChild(createText("Chill & Relaxed", 440, 300, textStyle));
 
     app.stage.addChild(modeScene);
 
@@ -304,16 +379,8 @@ function setUpGame() {
     //init our HUD containers for different game states
     gameScene = new PIXI.Container();
 
-    bloomFilter = new PIXI.filters.AdvancedBloomFilter();
-    bloomFilter.quality = 5;
-    bloomFilter.bloomScale = 1;
-    bloomFilter.brightness = 1.1;
-    bloomFilter.padding = 10;
-
 
     hexPath = [];
-    // Adding a stage background
-    //gameScene.addChild(createSprite('../media/background-panel.jpg', 0.5, 0.5, 512, 288));
 
     hexDisplacementSprite = PIXI.Sprite.from('media/hex-displacement.jpg');
     // hexMaskTexture = PIXI.Texture.from('media/hex-mask.jpg');
@@ -337,6 +404,9 @@ function setUpGame() {
             }
         }
     }
+
+    // Adding a stage background
+    gameScene.addChild(createSprite('../media/background-panel.png', 0.5, 0.5, 512, 288));
 
     // for falling
     for (let i = 0; i < hexGridWidth / 2; i++) {
@@ -380,50 +450,17 @@ function setUpGame() {
     //     hexRefractionGraphic.mask = hexRefractionMasks[i];
     // }
 
-    pathIndicator2 = new PathIndicator(16, .3, 0x969696);
-    gameScene.addChild(pathIndicator2);
-
-    pathIndicator = new PathIndicator();
-    gameScene.addChild(pathIndicator);
-
-
-    gameScene.filters = [bloomFilter];
-
-    // animates white line
-    displacementSprite = PIXI.Sprite.from('media/displacement-map-tiling.jpg');
-    displacementSprite2 = PIXI.Sprite.from('media/hex-gem-refraction.png');
-    // Make sure the sprite is wrapping.
-    displacementSprite.texture.baseTexture.wrapMode = PIXI.WRAP_MODES.REPEAT;
-    displacementFilter = new PIXI.filters.DisplacementFilter(displacementSprite);
-    displacementFilter.padding = 40;
-
-    displacementSprite2.texture.baseTexture.wrapMode = PIXI.WRAP_MODES.REPEAT;
-    displacementFilter2 = new PIXI.filters.DisplacementFilter(displacementSprite2);
-    displacementFilter2.padding = 40;
-
-    gameScene.addChild(displacementSprite2);
-    gameScene.addChild(displacementSprite);
-
     wrongMoveIndicator = new WrongMoveIndicator();
     let wmi_proxy = wrongMoveIndicator;
     gameScene.addChild(wmi_proxy);
 
-    
+
     gameScene.addChild(timeTracker);
     gameScene.addChild(scoreTracker);
 
     // events for drag end
     // app.stage.on('pointerup', onDragEnd);
     window.addEventListener('mouseup', onDragEnd);
-
-    pathIndicator.filters = [displacementFilter];
-    pathIndicator2.filters = [displacementFilter2];
-
-    displacementFilter.scale.x = 17;
-    displacementFilter.scale.y = 17;
-
-    displacementFilter2.scale.x = 13;
-    displacementFilter2.scale.y = 13;
 
     app.stage.addChild(gameScene);
 
@@ -434,7 +471,7 @@ function setUpGame() {
 // Inits the pause menu
 function setUpPause() {
     // Adding a stage background
-    pauseScene.addChild(createSprite('../media/background-panel.jpg', 0.5, 0.5, 512, 288));
+    pauseScene.addChild(createSprite('../media/background-panel.png', 0.5, 0.5, 512, 288));
 
     // Creating the logo
     let logo = createSprite('../media/pause-logo.png', 0, 0, 240, 50);
@@ -443,13 +480,13 @@ function setUpPause() {
     pauseScene.addChild(logo);
 
     // Creating the buttons
-    let gameStateButton = createStateButton("Back to Game", 75, 180, gameState, buttonStyle);
+    let gameStateButton = createStateButton("Back to Game", 75, 180, gameState, buttonStyleLarge);
     pauseScene.addChild(gameStateButton);
-    let modeButton = createStateButton("Change Mode", 75, 240, modeState, buttonStyle);
+    let modeButton = createStateButton("Change Mode", 75, 240, modeState, buttonStyleLarge);
     pauseScene.addChild(modeButton);
-    let backButton = createStateButton("Return to Menu", 75, 300, titleState, buttonStyle);
+    let backButton = createStateButton("Return to Menu", 75, 300, titleState, buttonStyleLarge);
     pauseScene.addChild(backButton);
-    let endGameButton = createStateButton("End Game", 75, 360, endGameState, buttonStyle);
+    let endGameButton = createStateButton("End Game", 75, 360, endGameState, buttonStyleLarge);
     pauseScene.addChild(endGameButton);
 
     app.stage.addChild(pauseScene);
@@ -458,7 +495,7 @@ function setUpPause() {
 // Inits everything for the end card
 function setUpEnd() {
     // Adding a stage background
-    endGameScene.addChild(createSprite('../media/background-panel.jpg', 0.5, 0.5, 512, 288));
+    endGameScene.addChild(createSprite('../media/background-panel.png', 0.5, 0.5, 512, 288));
 
     // Creating the logo
     let logo = createSprite('../media/game-over-logo.png', 0, 0, 115, 50);
@@ -471,7 +508,7 @@ function setUpEnd() {
     // howToPlayScene.addChild(createText("High Score: ", 75, 170, textStyle));
 
     // Creating the buttons
-    let backButton = createStateButton("Return to Menu", 170, 500, 0, buttonStyle);
+    let backButton = createStateButton("Return to Menu", 170, 500, 0, buttonStyleLarge);
     endGameScene.addChild(backButton);
 
     app.stage.addChild(endGameScene);
@@ -498,6 +535,12 @@ function setGameState(state) {
             break;
         case howToPlayState:
             passChildren(howToPlayState);
+            demoHexArray[0].setColorsAndRotation(3, 1, 2, 0);
+            demoHexArray[1].setColorsAndRotation(2, 4, 1, 0);
+            demoHexArray[2].setColorsAndRotation(3, 2, 4, 0);
+            howToPlayTextPopup1.alpha = 0;
+            howToPlayTextPopup2.alpha = 0;
+            howToPlayTextPopup3.alpha = 0;
             break;
         default:
             break;
@@ -518,12 +561,16 @@ function setGameState(state) {
 // Made so I don't have to literally recode half the drawing code because PIXI scenes are a tree
 function passChildren(targetState) {
     if (targetState == gameState) {
+        gameScene.addChild(pathIndicator2);
         gameScene.addChild(pathIndicator);
+        gameScene.addChild(displacementSprite2);
         gameScene.addChild(displacementSprite);
         gameScene.addChild(wrongMoveIndicator);
     }
     else if (targetState == howToPlayState) {
+        howToPlayScene.addChild(pathIndicator2);
         howToPlayScene.addChild(pathIndicator);
+        howToPlayScene.addChild(displacementSprite2);
         howToPlayScene.addChild(displacementSprite);
         howToPlayScene.addChild(wrongMoveIndicator);
     }
@@ -538,7 +585,7 @@ function recolorHexGrid() {
 
 // Creates and returns a button that calls setGameState
 // I have no idea why, but passing in a callback function refused to work and I am very upsetti about it :(
-function createStateButton(text, x, y, targetState, style = buttonStyle) {
+function createStateButton(text, x, y, targetState, style = buttonStyleLarge) {
     //store the text and position values
     let button = new PIXI.Text(text);
     button.style = style;
@@ -604,10 +651,25 @@ function updateLoop() {
 
     //maskedHexRefractionGraphic = new PIXI.Sprite(app.renderer.generateTexture(hexRefractionGraphic));
 
+    if (currentState == gameState) {
+        if (hexBreakAnimationTime > 0 || hexFallAnimationTime > 0) {
+            backgroundRefractionGraphic.tilePosition.x -= 68 * frameTime;
+            backgroundRefractionGraphic.tilePosition.y -= 68 * frameTime;
+        } else{
+            backgroundRefractionGraphic.tilePosition.x -= 24 * frameTime;
+            backgroundRefractionGraphic.tilePosition.y -= 24 * frameTime;
+        }
+    } else {
+        backgroundRefractionGraphic.tilePosition.x -= 14 * frameTime;
+        backgroundRefractionGraphic.tilePosition.y -= 14 * frameTime;
+    }
+
+
+
+
     if (wrongMoveIndicator.currentBlinkAmount < wrongMoveIndicator.currentBlinkAmountMax) {
         wrongMoveIndicator.update();
     }
-
     //update all the hex particle systems
     for (let i = 0; i < hexBreakParticles.length; i++) {
         hexBreakParticles[i].update();
@@ -616,7 +678,7 @@ function updateLoop() {
         //remove "dead" ones
         if (hexBreakParticles[i].currentLifeTime <= 0) {
             hexBreakParticles[i].clear();
-            gameScene.removeChild(hexBreakParticles[i]);
+            app.stage.removeChild(hexBreakParticles[i]);
             hexBreakParticles.shift();
             i--;
         }
@@ -691,15 +753,15 @@ function updateLoop() {
     }
 
     // Offsets the displacement map each frame
-    displacementSprite.x += 1;
-    displacementSprite.y += 1;
+    displacementSprite.x += 60 * frameTime;
+    displacementSprite.y += 60 * frameTime;
     // keep our displacement map's position within the necessary bounds
     if (displacementSprite.x > displacementSprite.width) { displacementSprite.x = 0; }
     if (displacementSprite.y >= displacementSprite.height) { displacementSprite.y = 0; }
 
     // Offsets the displacement map each frame
-    displacementSprite2.x += 2*(Math.random() - .5);
-    displacementSprite2.y -= 1;
+    displacementSprite2.x += 120 * (Math.random() - .5) * frameTime;
+    displacementSprite2.y -= 60 * frameTime;
     // keep our displacement map's position within the necessary bounds
     if (displacementSprite2.x > displacementSprite2.width) { displacementSprite2.x = 0; }
     if (displacementSprite2.y < 0) { displacementSprite2.y = displacementSprite2.height; }
@@ -726,7 +788,7 @@ function updateLoop() {
     }
 
     // change to only decrease on first click
-    if(gameStarted && currentMode != endlessMode){
+    if (gameStarted && currentMode != endlessMode) {
         currentTimeInSec -= dt;
         if (currentTimeInSec <= 0) {
             currentTimeInSec = 0;
@@ -764,7 +826,7 @@ function breakHex(hex) {
     //spawn a break hex particle
     let particle = new HexBreakParticleSystem(hex.x, hex.y, hex.colorIndices[0], hex.colorIndices[1], hex.colorIndices[2]);
     hexBreakParticles.push(particle);
-    gameScene.addChild(particle);
+    app.stage.addChild(particle);
 
     let column = Math.trunc(hex.posX / 2);
     columnWaitAmount[column]++;
@@ -792,7 +854,7 @@ function onDragEnd(e) {
     let completePath = compareHexes(hexPath);
     if (completePath && currentState == gameState) {
         console.log("here");
-        detectShape(hexPath);   
+        detectShape(hexPath);
         //start the hex breaking animation
         hexBreakAnimationTime = hexBreakAnimationTimeMax;
         hexBreakAnimationTimeMaxPerHex = hexBreakAnimationTimeMax / hexPath.length;
@@ -816,9 +878,21 @@ function onDragEnd(e) {
 
         pathIndicator.clear();
         pathIndicator2.clear();
-    }else if (completePath && currentState == howToPlayState) {
+    } else if (completePath && currentState == howToPlayState && hexPath.length == 3) {
         hexPath = [];
+        for (let i = 0; i < demoHexArray.length; i++) {
+            let particle = new HexBreakParticleSystem(demoHexArray[i].x, demoHexArray[i].y, demoHexArray[i].colorIndices[0], demoHexArray[i].colorIndices[1], demoHexArray[i].colorIndices[2]);
+            hexBreakParticles.push(particle);
+            app.stage.addChild(particle);
+        }
         setGameState(modeState);
+        pathIndicator.clear();
+        pathIndicator2.clear();
+    } else if (currentState == howToPlayState && completePath && hexPath.length == 2) {
+        hexPath = [];
+        howToPlayTextPopup1.alpha = 1;
+        howToPlayTextPopup2.alpha = 1;
+        howToPlayTextPopup3.alpha = 1;
         pathIndicator.clear();
         pathIndicator2.clear();
     } else {
