@@ -432,7 +432,7 @@ class PathIndicator extends PIXI.Graphics {
     // highlightOutlineValue;
 
     //inits this hexagon and stores its values
-    constructor(lineWidth = 11, alpha = 1, lineColor = 0xffffff) {
+    constructor(lineWidth = 11, alpha = 1, lineColor = 0xaaaaaa) {
         super();
         this.x = 0;
         this.y = 0;
