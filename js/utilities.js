@@ -127,11 +127,11 @@ function compareHexes(hexPath) {
                 //the segment after rotating, with out having to physically shift the data in the arrays (which is prone to cause bugs)
 
                 //NOTE: j also represents the direction the path is moving between 2 hexes (which is why we know which segments need to be compared,
-                //for example if the path is going down right (j = 5), then we have to compare bottom left segment of top hex and top right segment of bottom hex).
+                //for example if the path is going down left (j = 5), then we have to compare bottom left segment of top hex and top right segment of bottom hex).
 
                 //Knowing that j represents the direction of the path, we can use it to find shapes drawn within the path, maybe add j to a list and for every
                 //hex we check, we see if the list of j's (directions) is the same needed for a shape. If one j breaks the shape, then we clea rthat list and start again
-
+                
                 //if the 2 segments dont match, then we return false!
                 if (hexPath[i].hexagonValues[moveIntoRange(j - startIndexHexCurrent, 0, 6)] != hexPath[i + 1].hexagonValues[moveIntoRange(j - startIndexHexNext + 3, 0, 6)]){
                     wrongMovePositionAndDirection = {
@@ -163,107 +163,115 @@ function detectShape(hexPath) {
 
     //triangle destorys a random row
     if (detectTriangle(relativePath)) {
-        let randomY = Math.floor(Math.random() * 6)
-        switch (randomY % 2) {
-        case 0:
-            for (let i = 0; i < 12; i += 2) {
-                hex = findHexAtPos(i, randomY)
-                if (hex != null) {
-                    breakHex(hex);
-                }
-            }
-            break;
-        case 1:
-            for (let i = 1; i < 12; i += 2) {
-                hex = findHexAtPos(i, randomY)
-                if (hex != null) {
-                    breakHex(hex);
-                }
-            }
+        console.log("triangle");
+
+        // let randomY = Math.floor(Math.random() * 6)
+        // switch (randomY % 2) {
+        // case 0:
+        //     for (let i = 0; i < 12; i += 2) {
+        //         hex = findHexAtPos(i, randomY)
+        //         if (hex != null) {
+        //             breakHex(hex);
+        //         }
+        //     }
+        //     break;
+        // case 1:
+        //     for (let i = 1; i < 12; i += 2) {
+        //         hex = findHexAtPos(i, randomY)
+        //         if (hex != null) {
+        //             breakHex(hex);
+        //         }
+        //     }
             
-        }
+        // }
         
         
     }
 
     //lightning destroys 3 random tiles
     if (detectLightning(relativePath)) {
-        for (let i = 0; i < 4; i++) {
-            let randomX = Math.floor(Math.random() * 12)
-            let randomY = Math.floor(Math.random() * 6)
-            hex = findHexAtPos(randomX, randomY)
-            while (hex == null) {
-                randomX = Math.floor(Math.random() * 12)
-                randomY = Math.floor(Math.random() * 6)
-                hex = findHexAtPos(randomX, randomY)
-            }
+        console.log("Lightning");
+        // for (let i = 0; i < 4; i++) {
+        //     let randomX = Math.floor(Math.random() * 12)
+        //     let randomY = Math.floor(Math.random() * 6)
+        //     hex = findHexAtPos(randomX, randomY)
+        //     while (hex == null) {
+        //         randomX = Math.floor(Math.random() * 12)
+        //         randomY = Math.floor(Math.random() * 6)
+        //         hex = findHexAtPos(randomX, randomY)
+        //     }
             
-            breakHex(hex);
-        }
+        //     breakHex(hex);
+        // }
     }
 
     //W destroys a random row
     if (detectW(relativePath)) {
-        let randomX = Math.floor(Math.random() * 12)
-        console.log(randomX);
-        for (let i = 0; i < 6; i++) {
-            hex = findHexAtPos(randomX, i)
-            if (hex != null) {
-                breakHex(hex);
-            }
-        }
+        console.log("W shape");
+        // let randomX = Math.floor(Math.random() * 12)
+        // console.log(randomX);
+        // for (let i = 0; i < 6; i++) {
+        //     hex = findHexAtPos(randomX, i)
+        //     if (hex != null) {
+        //         breakHex(hex);
+        //     }
+        // }
     }
     
     //Trapezoid does a cool diagonal thing along the sides (WIP)
     if (detectTrapezoid(relativePath)) {
-        let maxLeft = hexPath[0].posX;
-        let maxRight = hexPath[0].posX;
-        let startY = hexPath[0].posY;
-        for (let i = 0; i < hexPath.length - 1; i++) {
-            if (hexPath[i].posX > maxRight) {
-                maxRight = hexPath[i].posX;
-            }
-            if (hexPath[i].posX < maxLeft) {
-                maxLeft = hexPath[i].posX;
-            }
-            if (hexPath[i].posY > startY) {
-                startY = hexPath[i].posY;
-            }
-        }
+        console.log("trapezoid");
+        // let maxLeft = hexPath[0].posX;
+        // let maxRight = hexPath[0].posX;
+        // let startY = hexPath[0].posY;
+        // for (let i = 0; i < hexPath.length - 1; i++) {
+        //     if (hexPath[i].posX > maxRight) {
+        //         maxRight = hexPath[i].posX;
+        //     }
+        //     if (hexPath[i].posX < maxLeft) {
+        //         maxLeft = hexPath[i].posX;
+        //     }
+        //     if (hexPath[i].posY > startY) {
+        //         startY = hexPath[i].posY;
+        //     }
+        // }
         
-        let hexL = findHexAtPos(maxRight, startY);
-        let hexR = findHexAtPos(maxLeft, startY);
+        // let hexL = findHexAtPos(maxRight, startY);
+        // let hexR = findHexAtPos(maxLeft, startY);
         
-        for (let i = 1; i < 12; i++) {
+        // for (let i = 1; i < 12; i++) {
             
-            if (hexR != null) {
-                if (hexR.posX != 12) {
-                    hexR = findHexAtPos(maxRight + i, startY + i)
-                    if (hexR != null) {
-                        breakHex(hexR);
-                    }
-                }
-            }
-            if (hexL != null) {
-                if (hexL.posX != 0) {
-                    hexL = findHexAtPos(maxLeft - i, startY + i)
-                    if (hexL != null) {
-                        breakHex(hexL);
-                    }
-                }
-            }
-        }
+        //     if (hexR != null) {
+        //         if (hexR.posX != 12) {
+        //             hexR = findHexAtPos(maxRight + i, startY + i)
+        //             if (hexR != null) {
+        //                 breakHex(hexR);
+        //             }
+        //         }
+        //     }
+        //     if (hexL != null) {
+        //         if (hexL.posX != 0) {
+        //             hexL = findHexAtPos(maxLeft - i, startY + i)
+        //             if (hexL != null) {
+        //                 breakHex(hexL);
+        //             }
+        //         }
+        //     }
+        // }
         
     }
     
     //IDK what should happen
     if(detectPentagram(relativePath))
     {
+        console.log("trapezoid");
 
     }
 
     //If you do the cool infinity thing destroy all tiles
     if (detectInfinity(relativePath)) {
+        console.log("infinity");
+
         breakAllHexes();
     }
 }
