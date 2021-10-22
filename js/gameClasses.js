@@ -43,7 +43,7 @@ class Hexagon extends PIXI.Graphics {
     //stores values of hexagon
     hexagonValues;
 
-    colorsRGB = [{ r: 158, g: 0, b: 0 }, { r: 189, g: 88, b: 0 }, { r: 191, g: 188, b: 0 }, { r: 0, g: 89, b: 0 }, { r: 0, g: 62, b: 196 }, { r: 78, g: 0, b: 99 }];
+    colorsRGB = [{ r: 180, g: 0, b: 0 }, { r: 189, g: 88, b: 0 }, { r: 191, g: 188, b: 0 }, { r: 0, g: 89, b: 0 }, { r: 0, g: 62, b: 196 }, { r: 78, g: 0, b: 99 }];
     colorIndices;
 
     //inits this hexagon and stores its values
@@ -190,12 +190,12 @@ class Hexagon extends PIXI.Graphics {
         let bevelStartRadius = this.radius * .87;
 
         for (let i = 0; i < 6; i++) {
-            if(this.highlighted){
-                
+            if (this.highlighted) {
+
                 this.beginFill(rgbToHex(255, lerp(0, 255, this.highlightOutlineBlinkValue), lerp(72, 255, this.highlightOutlineBlinkValue)));
                 this.drawPolygon([
-                    Math.sin(rad(60 * (i + this.rotationValue))) * (this.radius + 3), Math.cos(rad(60 * (i + this.rotationValue))) * (this.radius + 3),
-                    Math.sin(rad(60 * (i + 1 + this.rotationValue))) * (this.radius + 3), Math.cos(rad(60 * (i + 1 + this.rotationValue))) * (this.radius + 3),
+                    Math.sin(rad(60 * (i + this.rotationValue))) * (this.radius + 3.5), Math.cos(rad(60 * (i + this.rotationValue))) * (this.radius + 3.5),
+                    Math.sin(rad(60 * (i + 1 + this.rotationValue))) * (this.radius + 3.5), Math.cos(rad(60 * (i + 1 + this.rotationValue))) * (this.radius + 3.5),
                     0, 0,
                 ])
                 this.endFill;
@@ -424,22 +424,60 @@ class Hexagon extends PIXI.Graphics {
 
 
 class PathIndicator extends PIXI.Graphics {
+    lineWidth;
+    lineColor;
+
+    // highlightOutlineBlinkTime;
+    // highlightOutlineBlinkTimeMax = 1;
+    // highlightOutlineValue;
 
     //inits this hexagon and stores its values
-    constructor() {
+    constructor(lineWidth = 11, alpha = 1, lineColor = 0xffffff) {
         super();
         this.x = 0;
         this.y = 0;
         this.interactive = false;
         this.buttonMode = false;
+        this.padding = 20;
+        this.lineWidth = lineWidth;
+        this.alpha = alpha;
+        this.lineColor = lineColor;
+        // this.highlightOutlineBlinkTime = this.highlightOutlineBlinkTimeMax;
 
     }
 
     drawLine() {
+
+        // if (this.highlightOutlineBlinkTime > 0) {
+        //     this.highlightOutlineBlinkTime -= frameTime;
+        //     this.highlightOutlineBlinkValue = Math.sin(rad(180 * (this.highlightOutlineBlinkTime / this.highlightOutlineBlinkTimeMax)));
+        // }
+
+        // if (this.highlightOutlineBlinkTime <= 0) {
+        //     this.highlightOutlineBlinkTime = this.highlightOutlineBlinkTimeMax;
+        // }
+
         this.beginFill();
+        // if (this.lineColor != 0xffffff) {
+        //     this.lineStyle({
+        //         width: this.lineWidth,
+        //         color: rgbToHex(255, lerp(0, 255, this.highlightOutlineBlinkValue), lerp(72, 255, this.highlightOutlineBlinkValue)),
+        //         join: 'round',
+        //         cap: 'round'
+        //     });
+        // }
+        // else {
+        //     this.lineStyle({
+        //         width: this.lineWidth,
+        //         color: 0xffffff,
+        //         join: 'round',
+        //         cap: 'round'
+        //     });
+        // }
+        
         this.lineStyle({
-            width: 11,
-            color: 0xffffff,
+            width: this.lineWidth,
+            color: this.lineColor,
             join: 'round',
             cap: 'round'
         });

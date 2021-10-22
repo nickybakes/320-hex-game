@@ -48,6 +48,7 @@ let hexPath = [];
 let highlightedHex;
 let dragStartHex;
 let pathIndicator;
+let pathIndicator2;
 
 //true if we should visually connect the white line to the start of the hex path
 let connectPathToStart;
@@ -91,7 +92,9 @@ let wrongMovePositionAndDirection;
 let columnWaitAmount = [];
 
 let displacementSprite;
+let displacementSprite2;
 let displacementFilter;
+let displacementFilter2;
 let hexDisplacementSprite;
 let hexRefractionSprite;
 let hexRefractionGraphic;
@@ -291,17 +294,28 @@ function setUpGame() {
     //     hexRefractionGraphic.mask = hexRefractionMasks[i];
     // }
 
+    pathIndicator2 = new PathIndicator(16, .3, 0x969696);
+    gameScene.addChild(pathIndicator2);
+
     pathIndicator = new PathIndicator();
     gameScene.addChild(pathIndicator);
+
 
     gameScene.filters = [bloomFilter];
 
     // animates white line
     displacementSprite = PIXI.Sprite.from('media/displacement-map-tiling.jpg');
+    displacementSprite2 = PIXI.Sprite.from('media/hex-gem-refraction.png');
     // Make sure the sprite is wrapping.
     displacementSprite.texture.baseTexture.wrapMode = PIXI.WRAP_MODES.REPEAT;
     displacementFilter = new PIXI.filters.DisplacementFilter(displacementSprite);
+    displacementFilter.padding = 40;
 
+    displacementSprite2.texture.baseTexture.wrapMode = PIXI.WRAP_MODES.REPEAT;
+    displacementFilter2 = new PIXI.filters.DisplacementFilter(displacementSprite2);
+    displacementFilter2.padding = 40;
+
+    gameScene.addChild(displacementSprite2);
     gameScene.addChild(displacementSprite);
 
     wrongMoveIndicator = new WrongMoveIndicator();
@@ -315,9 +329,13 @@ function setUpGame() {
     window.addEventListener('mouseup', onDragEnd);
 
     pathIndicator.filters = [displacementFilter];
+    pathIndicator2.filters = [displacementFilter2];
 
     displacementFilter.scale.x = 17;
     displacementFilter.scale.y = 17;
+
+    displacementFilter2.scale.x = 13;
+    displacementFilter2.scale.y = 13;
 
     app.stage.addChild(gameScene);
 
@@ -538,8 +556,12 @@ function updateLoop() {
         scanBoardForFallableHexes();
     }
 
+    pathIndicator2.clear();
+    pathIndicator2.drawLine();
+
     pathIndicator.clear();
     pathIndicator.drawLine();
+
 
     // You can hit esc to pause the game now
     if (keysHeld["27"]) {
@@ -582,7 +604,14 @@ function updateLoop() {
     displacementSprite.y += 1;
     // keep our displacement map's position within the necessary bounds
     if (displacementSprite.x > displacementSprite.width) { displacementSprite.x = 0; }
-    if (displacementSprite.y > displacementSprite.height) { displacementSprite.y = 0; }
+    if (displacementSprite.y >= displacementSprite.height) { displacementSprite.y = 0; }
+
+    // Offsets the displacement map each frame
+    displacementSprite2.x += 2*(Math.random() - .5);
+    displacementSprite2.y -= 1;
+    // keep our displacement map's position within the necessary bounds
+    if (displacementSprite2.x > displacementSprite2.width) { displacementSprite2.x = 0; }
+    if (displacementSprite2.y < 0) { displacementSprite2.y = displacementSprite2.height; }
 
     if (rotationCoolDown > 0)
         rotationCoolDown -= frameTime;
@@ -694,6 +723,7 @@ function onDragEnd(e) {
         currentTimeInSec += hexPath.length; // currently add one sec for each hex
 
         pathIndicator.clear();
+        pathIndicator2.clear();
     } else {
         //if the path is wrong in any way
         if (hexPath.length > 1) {
@@ -761,6 +791,7 @@ function breakAllHexes() {
     hexBreakAnimationTime += .1;
 
     pathIndicator.clear();
+    pathIndicator2.clear();
     dragStartHex = null;
     mouseHeldDown = false;
 }
