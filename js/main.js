@@ -114,6 +114,8 @@ let hexDisplacementSprite;
 let bloomFilter;
 let backgroundRefractionSprite;
 let backgroundRefractionGraphic;
+let backgroundRefractionGraphic2;
+let backgroundRefractionGraphic3;
 
 let backgroundOverlaySprite;
 let backgroundOverlayGraphic;
@@ -200,7 +202,13 @@ function setupScenes() {
 
     backgroundRefractionSprite = PIXI.Texture.from('media/background-refraction-pattern.jpg');
     backgroundRefractionGraphic = new PIXI.TilingSprite(backgroundRefractionSprite, 1024, 576);
-    backgroundRefractionGraphic.alpha = .1;
+    backgroundRefractionGraphic.alpha = .07;
+
+    backgroundRefractionGraphic2 = new PIXI.TilingSprite(backgroundRefractionSprite, 1024, 576);
+    backgroundRefractionGraphic2.alpha = .07;
+
+    backgroundRefractionGraphic3 = new PIXI.TilingSprite(backgroundRefractionSprite, 1024, 576);
+    backgroundRefractionGraphic3.alpha = .07;
 
     app.stage.addChild(backgroundRefractionGraphic);
 
@@ -288,14 +296,32 @@ function setupHowToPlay() {
 
     // demoHexPath = [];
 
-    // Adding a stage background
-    howToPlayScene.addChild(createSprite('../media/background-panel.png', 0.5, 0.5, 512, 288));
+
 
     // Creating the logo
     let logo = createSprite('../media/how-to-play-logo.png', 0, 0, 170, 50);
     logo.width = 400;
     logo.height = 80;
     howToPlayScene.addChild(logo);
+
+    let demoHex1 = new Hexagon(getScreenSpaceX(3), getScreenSpaceY(3), 3, 3, hexRadius, 1, null, null);
+    demoHex1.setColorsAndRotation(3, 1, 2, 0);
+    demoHexArray.push(demoHex1);
+    let demoHex2 = new Hexagon(getScreenSpaceX(5), getScreenSpaceY(3), 5, 3, hexRadius, 3, null, null);
+    demoHex2.setColorsAndRotation(2, 4, 1, 0);
+    demoHexArray.push(demoHex2);
+    let demoHex3 = new Hexagon(getScreenSpaceX(7), getScreenSpaceY(3), 7, 3, hexRadius, 2, null, null);
+    demoHex3.setColorsAndRotation(3, 2, 4, 0);
+    demoHexArray.push(demoHex3);
+    howToPlayScene.addChild(demoHex1);
+    howToPlayScene.addChild(demoHex2);
+    howToPlayScene.addChild(demoHex3);
+    // titleScene.addChild(new Hexagon(getScreenSpaceX(6), getScreenSpaceY(4), 5, 3, hexRadius, Math.trunc(Math.random() * 6), null, null));
+
+    howToPlayScene.addChild(backgroundRefractionGraphic2);
+
+    // Adding a stage background
+    howToPlayScene.addChild(createSprite('../media/background-panel.png', 0.5, 0.5, 512, 288));
 
     howToPlayScene.addChild(createText("Drag your mouse between segments of the same color to", 75, 150, textStyle));
     howToPlayScene.addChild(createText("make a match! You can also press Q and E to rotate hexes.", 75, 170, textStyle));
@@ -313,20 +339,6 @@ function setupHowToPlay() {
     howToPlayScene.addChild(howToPlayTextPopup1);
     howToPlayScene.addChild(howToPlayTextPopup2);
     howToPlayScene.addChild(howToPlayTextPopup3);
-
-    let demoHex1 = new Hexagon(getScreenSpaceX(3), getScreenSpaceY(3), 3, 3, hexRadius, 1, null, null);
-    demoHex1.setColorsAndRotation(3, 1, 2, 0);
-    demoHexArray.push(demoHex1);
-    let demoHex2 = new Hexagon(getScreenSpaceX(5), getScreenSpaceY(3), 5, 3, hexRadius, 3, null, null);
-    demoHex2.setColorsAndRotation(2, 4, 1, 0);
-    demoHexArray.push(demoHex2);
-    let demoHex3 = new Hexagon(getScreenSpaceX(7), getScreenSpaceY(3), 7, 3, hexRadius, 2, null, null);
-    demoHex3.setColorsAndRotation(3, 2, 4, 0);
-    demoHexArray.push(demoHex3);
-    howToPlayScene.addChild(demoHex1);
-    howToPlayScene.addChild(demoHex2);
-    howToPlayScene.addChild(demoHex3);
-    // titleScene.addChild(new Hexagon(getScreenSpaceX(6), getScreenSpaceY(4), 5, 3, hexRadius, Math.trunc(Math.random() * 6), null, null));
 
     // Creating the buttons
     let playButton = createStateButton("Back to Menu", 75, 540, titleState, buttonStyleMedium);
@@ -404,6 +416,8 @@ function setUpGame() {
             }
         }
     }
+
+    gameScene.addChild(backgroundRefractionGraphic3);
 
     // Adding a stage background
     gameScene.addChild(createSprite('../media/background-panel.png', 0.5, 0.5, 512, 288));
@@ -532,6 +546,7 @@ function setGameState(state) {
                 score = 0;
             }
             passChildren(gameState);
+            backgroundRefractionGraphic.alpha = .02;
             break;
         case howToPlayState:
             passChildren(howToPlayState);
@@ -541,8 +556,10 @@ function setGameState(state) {
             howToPlayTextPopup1.alpha = 0;
             howToPlayTextPopup2.alpha = 0;
             howToPlayTextPopup3.alpha = 0;
+            backgroundRefractionGraphic.alpha = 0;
             break;
         default:
+            backgroundRefractionGraphic.alpha = .07;
             break;
     }
 
@@ -655,13 +672,26 @@ function updateLoop() {
         if (hexBreakAnimationTime > 0 || hexFallAnimationTime > 0) {
             backgroundRefractionGraphic.tilePosition.x -= 68 * frameTime;
             backgroundRefractionGraphic.tilePosition.y -= 68 * frameTime;
-        } else{
+            backgroundRefractionGraphic2.tilePosition.x -= 68 * frameTime;
+            backgroundRefractionGraphic2.tilePosition.y -= 68 * frameTime;
+            backgroundRefractionGraphic3.tilePosition.x -= 68 * frameTime;
+            backgroundRefractionGraphic3.tilePosition.y -= 68 * frameTime;
+        } else {
             backgroundRefractionGraphic.tilePosition.x -= 24 * frameTime;
             backgroundRefractionGraphic.tilePosition.y -= 24 * frameTime;
+            backgroundRefractionGraphic2.tilePosition.x -= 24 * frameTime;
+            backgroundRefractionGraphic2.tilePosition.y -= 24 * frameTime;
+            backgroundRefractionGraphic3.tilePosition.x -= 24 * frameTime;
+            backgroundRefractionGraphic3.tilePosition.y -= 24 * frameTime;
+
         }
     } else {
         backgroundRefractionGraphic.tilePosition.x -= 14 * frameTime;
         backgroundRefractionGraphic.tilePosition.y -= 14 * frameTime;
+        backgroundRefractionGraphic2.tilePosition.x -= 14 * frameTime;
+        backgroundRefractionGraphic2.tilePosition.y -= 14 * frameTime;
+        backgroundRefractionGraphic3.tilePosition.x -= 14 * frameTime;
+        backgroundRefractionGraphic3.tilePosition.y -= 14 * frameTime;
     }
 
 
