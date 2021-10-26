@@ -497,11 +497,11 @@ function setUpPause() {
     // Creating the buttons
     let gameStateButton = createStateButton("Back to Game", 75, 180, gameState, buttonStyleLarge);
     pauseScene.addChild(gameStateButton);
-    let modeButton = createStateButton("Change Mode", 75, 240, modeState, buttonStyleLarge);
+    let modeButton = createStateButton("Quit to Mode Select", 75, 240, modeState, buttonStyleLarge);
     pauseScene.addChild(modeButton);
-    let backButton = createStateButton("Return to Menu", 75, 300, titleState, buttonStyleLarge);
-    pauseScene.addChild(backButton);
-    let endGameButton = createStateButton("End Game", 75, 360, endGameState, buttonStyleLarge);
+    // let backButton = createStateButton("Quit to Menu", 75, 300, titleState, buttonStyleLarge);
+    // pauseScene.addChild(backButton);
+    let endGameButton = createStateButton("End Game", 75, 300, endGameState, buttonStyleLarge);
     pauseScene.addChild(endGameButton);
 
     app.stage.addChild(pauseScene);
@@ -523,8 +523,11 @@ function setUpEnd() {
     // howToPlayScene.addChild(createText("High Score: ", 75, 170, textStyle));
 
     // Creating the buttons
-    let backToMenuButton = createStateButton("Return to Menu", 170, 500, titleState, buttonStyleLarge);
+    let backToMenuButton = createStateButton("Return to Menu", 170, 500, modeState, buttonStyleLarge);
     endGameScene.addChild(backToMenuButton);
+
+    let scoreText = createText(`Final Score: ${score}`, 170, 300, buttonStyleLarge);
+    endGameScene.addChild(scoreText);
 
     // let backButton = createStateButton("Return to Menu", 75, 300, titleState, buttonStyleLarge);
     // endGameScene.addChild(backButton);
@@ -540,21 +543,28 @@ function setGameState(state) {
     //2 - game
     //3 - pause
     //4 - endgame
-
+    
     // Handle anything that needs to run while transitioning between states
     switch (state) {
         case gameState:
             if (currentState != pauseState) {
-                recolorHexGrid();
                 currentTimeInSec = startTimeInSec;
                 score = 0;
+                recolorHexGrid();
             }
             currentTimeInSec = pausedTime;
             passChildren(gameState);
             backgroundRefractionGraphic.alpha = .02;
+            gameStarted = true;
             break;
         case pauseState:
             pausedTime = currentTimeInSec;
+            break;
+        case modeState:
+            currentTimeInSec = startTimeInSec;
+            pausedTime = currentTimeInSec;
+            score = 0;
+            recolorHexGrid();
             break;
         case howToPlayState:
             passChildren(howToPlayState);
@@ -827,10 +837,11 @@ function updateLoop() {
 
     // change to only decrease on first click
     if (gameStarted && currentMode != endlessMode) {
-        currentState != gameState ? currentTimeInSec = pausedTime : currentTimeInSec -= dt;
+        currentTimeInSec -= dt;
         if (currentTimeInSec <= 0) {
             currentTimeInSec = 0;
             setGameState(endGameState);
+            gameStarted = false;
         }
     }
     currentMode != endlessMode ? timeTracker.text = secondsToTimeString(currentTimeInSec) : timeTracker.text = ``;
@@ -891,7 +902,6 @@ function onDragEnd(e) {
     console.log("Drag End (for whole window)");
     let completePath = compareHexes(hexPath);
     if (completePath && currentState == gameState) {
-        console.log("here");
         detectShape(hexPath);
         //start the hex breaking animation
         hexBreakAnimationTime = hexBreakAnimationTimeMax;
