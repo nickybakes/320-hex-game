@@ -75,6 +75,7 @@ let rotationCoolDownMax = .2;
 
 // timer variables
 let startTimeInSec = 30;
+let pausedTime = startTimeInSec;
 let currentTimeInSec = startTimeInSec;
 let gameStarted = false;
 let timeTracker = new PIXI.Text('timer', { fill: 0xffffff });
@@ -522,8 +523,11 @@ function setUpEnd() {
     // howToPlayScene.addChild(createText("High Score: ", 75, 170, textStyle));
 
     // Creating the buttons
-    let backButton = createStateButton("Return to Menu", 170, 500, 0, buttonStyleLarge);
-    endGameScene.addChild(backButton);
+    let backToMenuButton = createStateButton("Return to Menu", 170, 500, titleState, buttonStyleLarge);
+    endGameScene.addChild(backToMenuButton);
+
+    // let backButton = createStateButton("Return to Menu", 75, 300, titleState, buttonStyleLarge);
+    // endGameScene.addChild(backButton);
 
     app.stage.addChild(endGameScene);
 }
@@ -545,8 +549,12 @@ function setGameState(state) {
                 currentTimeInSec = startTimeInSec;
                 score = 0;
             }
+            currentTimeInSec = pausedTime;
             passChildren(gameState);
             backgroundRefractionGraphic.alpha = .02;
+            break;
+        case pauseState:
+            pausedTime = currentTimeInSec;
             break;
         case howToPlayState:
             passChildren(howToPlayState);
@@ -819,10 +827,10 @@ function updateLoop() {
 
     // change to only decrease on first click
     if (gameStarted && currentMode != endlessMode) {
-        currentTimeInSec -= dt;
+        currentState != gameState ? currentTimeInSec = pausedTime : currentTimeInSec -= dt;
         if (currentTimeInSec <= 0) {
             currentTimeInSec = 0;
-            // END GAME
+            setGameState(endGameState);
         }
     }
     currentMode != endlessMode ? timeTracker.text = secondsToTimeString(currentTimeInSec) : timeTracker.text = ``;
