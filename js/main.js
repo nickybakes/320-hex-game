@@ -59,7 +59,8 @@ let rotationCoolDownMax = .2;
 // timer variables
 let startTimeInSec = 30;
 let currentTimeInSec = startTimeInSec;
-let gameStarted = false;
+let startCountdown = false;
+let countDown = false;
 let timeTracker = new PIXI.Text('timer', {fill: 0xffffff});
 timeTracker.x = 900;
 
@@ -448,6 +449,8 @@ function updateLoop() {
 
     //break the hexes sequentially, in order they are in the path
     if (hexBreakAnimationTime > 0) {
+        countDown = false;
+
         hexBreakAnimationTime -= frameTime;
         hexBreakAnimationTimePerHex -= frameTime;
         if (hexPath.length > 0 && hexBreakAnimationTimePerHex <= 0) {
@@ -529,11 +532,13 @@ function updateLoop() {
             for (let i = 0; i < hexGridWidth / 2; i++) {
                 columnWaitAmount[i] = 0;
             }
+
+            countDown = true;
         }
     }
 
-    // change to only decrease on first click
-    if(gameStarted){
+    // decrease timer
+    if(startCountdown && countDown){
         currentTimeInSec -= dt;
         if(currentTimeInSec <= 0){
             currentTimeInSec = 0;
@@ -541,7 +546,6 @@ function updateLoop() {
         }
     }
     timeTracker.text = secondsToTimeString(currentTimeInSec);
-
     //reset our controls for next frame
     keysReleased = [];
 }
@@ -590,7 +594,8 @@ function breakHex(hex) {
 
 //when  the user stops dragging the handle
 function onDragEnd(e) {
-    gameStarted = true;
+    startCountdown = true;
+    countDown = true;
 
     if (hexFallAnimationTime > 0 || hexBreakAnimationTime > 0)
         return;
