@@ -182,8 +182,6 @@ function detectShape(hexPath) {
             }
             
         }
-        
-        
     }
 
     //lightning destroys 3 random tiles
@@ -197,7 +195,6 @@ function detectShape(hexPath) {
                 randomY = Math.floor(Math.random() * 6)
                 hex = findHexAtPos(randomX, randomY)
             }
-            
             breakHex(hex);
         }
     }
@@ -264,6 +261,7 @@ function detectShape(hexPath) {
 
     //If you do the cool infinity thing destroy all tiles
     if (detectInfinity(relativePath)) {
+        comboPoints += 12;
         breakAllHexes();
     }
 }
