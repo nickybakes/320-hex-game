@@ -27,6 +27,17 @@ let pauseScene;
 let endGameScene;
 let scenes = [];
 
+// sounds
+let buttonSound = new Howl({
+    src: ['media/buttonClick.mp3']
+});
+let timerSound = new Howl({
+    src: ['media/timerTick.mp3']
+});
+let breakSound = new Howl({
+    src: ['media/break.mp3']
+});
+
 // As close to an enum as we're gonna get with no TypeScript :(
 const titleState = 0;
 const howToPlayState = 1;
@@ -95,6 +106,7 @@ const redText = new PIXI.TextStyle({
 let startTimeInSec = 30;
 let pausedTime = startTimeInSec;
 let currentTimeInSec = startTimeInSec;
+let prevTime = currentTimeInSec;
 let startCountdown = false;
 let countDown = false;
 let timeTracker = new PIXI.Text('timer', whiteText);
@@ -366,6 +378,8 @@ function setUpTitle() {
 
 //Plays a little rainbow effect when the Play button is clicked on the title screen
 function playButtonClick(){
+    buttonSound.play();
+
     for (let i = 0; i < 6; i++) {
         let particle = new HexBreakParticleSystem(160 + i * 80, 330, i, i, i);
         hexBreakParticles.push(particle);
@@ -770,7 +784,7 @@ function createStateButton(text, x, y, targetState, style = buttonStyleLarge) {
     button.interactive = true;
     button.buttonMode = true;
     //when the user clicks down, set our selected button to this one
-    // button.on('pointerdown', function (e) { selectedButton = button });
+     button.on('pointerdown', function (e) { buttonSound.play(); });
     //when the user releases the click; if this is the same button their clicked down on, then call its function!
     button.on('pointerup', function (e) { setGameState(targetState); });
     //if the user hovers over the button, change alpha
@@ -1017,7 +1031,17 @@ function updateLoop() {
 
     // change to only decrease on first click
     if (gameStarted && currentMode != endlessMode && !isInCountdown) {
+        prevTime = currentTimeInSec;
         currentTimeInSec -= dt;
+
+        if(Math.ceil(currentTimeInSec) < Math.ceil(prevTime)){
+            timerSound.play();
+
+            if(currentTimeInSec <= 10){
+                flashText();
+            }
+        }
+
         if (currentTimeInSec <= 0) {
             isGameOver = true;
 
@@ -1030,9 +1054,6 @@ function updateLoop() {
 
     //controlling time text HUD
     currentMode != endlessMode ? timeTracker.text = secondsToTimeString(currentTimeInSec) : timeTracker.text = ``;
-    if(currentTimeInSec <= 10 && (Math.round(currentTimeInSec * 100) / 100) % 1 == 0){
-        flashText();
-    }
 
     timeTracker.text = secondsToTimeString(currentTimeInSec);
 
@@ -1068,6 +1089,8 @@ function breakHex(hex) {
     scoreTracker.text = scoreString + score;
 
     currentTimeInSec++;
+
+    breakSound.play();
 
     //spawn a break hex particle
     let particle = new HexBreakParticleSystem(hex.x, hex.y, hex.colorIndices[0], hex.colorIndices[1], hex.colorIndices[2]);
