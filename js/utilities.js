@@ -276,6 +276,25 @@ function detectShape(hexPath) {
     }
 }
 
+function checkForTriangle(){
+
+}
+function checkForRhombus() {
+
+}
+function checkForDiamond() {
+
+}
+function checkForLightning() {
+
+}
+function checkForW() {
+
+}
+function checkForFlower() {
+
+}
+
 //checks path made by player and sees if it follows any triangel patterns
 function detectTriangle(relativePath)
 {

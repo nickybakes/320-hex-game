@@ -298,18 +298,82 @@ class Hexagon extends PIXI.Graphics {
                 ])
                 this.endFill;
 
-                let iconIndex = this.colorIndices[Math.trunc(i / 2)];
 
-                if (iconIndex == 5){
-                    this.beginFill(bevelCounterClockwiseColor);
-                    let circleCenterX = Math.sin(rad(60 * (i + this.rotationValue))) * (this.radius / 2);
-                    let circleCenterY = Math.cos(rad(60 * (i + this.rotationValue))) * (this.radius / 2);
-                    this.drawEllipse(circleCenterX, circleCenterY, 14, 5);
-                    this.drawPolygon([
-                        circleCenterX - 6, circleCenterY,
-                        circleCenterX + 6, circleCenterY,
-                        circleCenterX, circleCenterY - 16,
-                    ])
+
+                if (showHexIcons) {
+                    let iconIndex = this.colorIndices[Math.trunc(i / 2)];
+                    let iconCenterX = Math.sin(rad(60 * (i + this.rotationValue))) * (this.radius / 2);
+                    let iconCenterY = Math.cos(rad(60 * (i + this.rotationValue))) * (this.radius / 2);
+                    this.beginFill(rgbToHex(color.r - 140.8, color.g - 140.8, color.b - 140.8));
+
+                    if (iconIndex == 0) {
+                        this.drawPolygon([
+                            iconCenterX, iconCenterY - 2.5,
+                            iconCenterX - 5, iconCenterY - 7.5,
+                            iconCenterX - 12.5, iconCenterY,
+                            iconCenterX, iconCenterY + 12.5,
+                            iconCenterX + 12.5, iconCenterY,
+                            iconCenterX + 5, iconCenterY - 7.5,
+                            iconCenterX, iconCenterY - 2.5,
+
+                            //1.5x larger
+                            // iconCenterX, iconCenterY - 3,
+                            // iconCenterX - 6, iconCenterY - 9,
+                            // iconCenterX - 15, iconCenterY,
+                            // iconCenterX, iconCenterY + 15,
+                            // iconCenterX + 15, iconCenterY,
+                            // iconCenterX + 6, iconCenterY - 9,
+                            // iconCenterX, iconCenterY - 3,
+                        ])
+                    }
+                    else if (iconIndex == 1) {
+                        this.drawPolygon([
+                            iconCenterX - 12, iconCenterY - 12,
+                            iconCenterX + 4, iconCenterY,
+                            iconCenterX - 6, iconCenterY + 4,
+                        ])
+
+                        this.drawPolygon([
+                            iconCenterX - 10, iconCenterY + 8,
+                            iconCenterX + 8, iconCenterY,
+                            iconCenterX + 10, iconCenterY + 2,
+                            iconCenterX - 8, iconCenterY + 10,
+                        ])
+
+                        this.drawPolygon([
+                            iconCenterX - 1, iconCenterY + 9,
+                            iconCenterX + 4, iconCenterY + 6,
+                            iconCenterX + 7, iconCenterY + 10,
+                            iconCenterX + 2, iconCenterY + 13,
+                        ])
+                    }
+                    else if (iconIndex == 2) {
+                        this.drawCircle(iconCenterX, iconCenterY - 6, 7);
+                        this.drawCircle(iconCenterX - 6, iconCenterY + 4, 7);
+                        this.drawCircle(iconCenterX + 6, iconCenterY + 4, 7);
+                    }
+                    else if (iconIndex == 3) {
+                        this.lineStyle({
+                            width: 3
+                        });
+                        this.moveTo(iconCenterX, iconCenterY);
+                        for (let q = 0; q < 720; q += 60) {
+                            this.moveTo(iconCenterX + Math.sin(rad(q)) * (q / 50), iconCenterY + Math.cos(rad(q)) * (q / 50));
+                            this.lineTo(iconCenterX + Math.sin(rad(q + 60)) * ((q + 60) / 50), iconCenterY + Math.cos(rad(q + 60)) * ((q + 60) / 50));
+                        }
+                        this.lineStyle(0);
+                    }
+                    else if (iconIndex == 4) {
+                        this.drawStar(iconCenterX, iconCenterY, 4, 14, 4.7, 0);
+                    }
+                    else if (iconIndex == 5) {
+                        this.drawEllipse(iconCenterX, iconCenterY + 2, 14, 5);
+                        this.drawPolygon([
+                            iconCenterX - 6, iconCenterY + 2,
+                            iconCenterX + 6, iconCenterY + 2,
+                            iconCenterX, iconCenterY - 16,
+                        ])
+                    }
                     this.endFill;
                 }
             }
