@@ -1,8 +1,4 @@
-/*Font: 'Amaranth' by Gesine Todt: https://fonts.google.com/specimen/Amaranth*/
-@import url("https://fonts.googleapis.com/css2?family=Amaranth&display=swap");
-
-html,
-body {
+html, body {
   color: white;
   font-family: "Goldman", Arial, sans-serif;
   margin: 0;
@@ -12,12 +8,15 @@ html {
   height: 100%;
   -webkit-text-size-adjust: 100%;
 }
+
 /* background of our page is a dark grey */
+
 body {
   background-color: rgb(31, 31, 31);
 }
 
 /* everything has a smooth transition between states */
+
 * {
   transition: all 0.2s ease-in-out;
 }
@@ -30,12 +29,13 @@ body {
 header {
   text-align: center;
   font-size: 20pt;
-  font-family: "Amaranth", arial, sans-serif;
+  font-family: "PT Serif", arial, sans-serif;
   width: 60%;
   margin: 0 auto;
 }
 
 /* title font sizes */
+
 h1 {
   margin: 0 auto;
 }
@@ -58,6 +58,7 @@ header p {
 }
 
 /* our game display should be centered */
+
 canvas {
   margin: 0 auto 1em;
   display: block;
@@ -72,6 +73,7 @@ canvas {
 }
 
 /* make our textbox for the user to put track codes look nice */
+
 #track-code-input {
   width: 100%;
   font-family: "Roboto", Arial, sans-serif;
@@ -86,6 +88,7 @@ canvas {
 }
 
 /* simple font settings */
+
 #how-to-play {
   margin: 0 auto;
   width: 60%;
@@ -108,6 +111,7 @@ canvas {
 }
 
 /* standard, 2 images side by side */
+
 #controls {
   display: grid;
   width: 70%;
@@ -122,8 +126,8 @@ img {
 }
 
 /* a link that looks like a button, has a dark blue background, yellow border, etc */
-.button-link,
-.button-link:visited {
+
+.button-link, .button-link:visited {
   display: block;
   text-decoration: none;
   background-color: #2a1b5eaf;
@@ -141,8 +145,7 @@ img {
   text-align: center;
 }
 
-.button-link:hover,
-.button-link:focus {
+.button-link:hover, .button-link:focus {
   border-color: #ffd900;
   color: #ffd900;
   background-color: #ffd9002a;
@@ -156,6 +159,7 @@ img {
 }
 
 /* a message pop-up that floats above everything else. used as feedback for user */
+
 .message {
   z-index: 2;
   position: fixed;
@@ -180,12 +184,13 @@ img {
 }
 
 #info-box {
-  font-family: "Amaranth", sans-serif;
+  font-family: "PT Serif", sans-serif;
   font-size: 15pt;
   margin: 0 20% 0 20%;
 }
 
 /* footer is yellow with black text */
+
 footer {
   background-color: #ffd900;
   color: black;
@@ -201,8 +206,8 @@ footer p {
 }
 
 /* makes in-text links yellow/orange */
-a,
-a:visited {
+
+a, a:visited {
   background: none;
   outline: none;
   border: none;
@@ -213,8 +218,7 @@ a:visited {
   cursor: pointer;
 }
 
-a:focus,
-a:hover {
+a:focus, a:hover {
   color: #ff9900;
 }
 
@@ -223,6 +227,7 @@ a:active {
 }
 
 /* make side margins smaller when on smaller screen widths */
+
 @media screen and (max-width: 1100px) {
   header {
     text-align: center;
@@ -231,13 +236,11 @@ a:active {
     width: 90%;
     margin: 0 auto;
   }
-
   .track-code-area {
     width: 90%;
     margin: 0 auto;
     display: block;
   }
-
   #game-info {
     margin: 0 auto;
     width: 90%;
