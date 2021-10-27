@@ -230,7 +230,7 @@ const textStyle4 = new PIXI.TextStyle({
 const countdownStyle = new PIXI.TextStyle({
     fill: 0xffeb0b,
     fontSize: 150,
-    fontFamily: "Amaranth",
+    fontFamily: "PT Serif",
     stroke: true,
     strokeThickness: 3,
     dropShadow: true,
@@ -935,8 +935,10 @@ function updateLoop() {
 
 
     // You can hit esc to pause the game now
-    if (!keysHeld["27"] && keysReleased["27"]) {
-        currentState == gameState ? setGameState(pauseState) : setGameState(gameState);
+    if (!keysHeld["27"] && keysReleased["27"] && currentState == gameState) {
+        setGameState(pauseState);
+    } else if (!keysHeld["27"] && keysReleased["27"] && currentState == pauseState) {
+        setGameState(gameState);
     }
 
     //check for E press to rotate hex CW
@@ -1020,21 +1022,14 @@ function updateLoop() {
             isGameOver = true;
 
             // Change this if needed
-            currentTimeInSec = 0;
+            currentTimeInSec = -0.1;
             setGameState(endGameState);
             gameStarted = false;
         }
     }
-    currentMode != endlessMode ? timeTracker.text = secondsToTimeString(currentTimeInSec) : timeTracker.text = ``;
-    // decrease timer
-    if(startCountdown && countDown){
-        currentTimeInSec -= dt;
-        if(currentTimeInSec <= 0){
-            currentTimeInSec = -0.1;
-            setGameState(4);
-        }
-    }
 
+    //controlling time text HUD
+    currentMode != endlessMode ? timeTracker.text = secondsToTimeString(currentTimeInSec) : timeTracker.text = ``;
     if(currentTimeInSec <= 10 && (Math.round(currentTimeInSec * 100) / 100) % 1 == 0){
         flashText();
     }
