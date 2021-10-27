@@ -804,11 +804,11 @@ function updateLoop() {
     //get our mouse position
     mousePosition = app.renderer.plugins.interaction.mouse.global;
 
-    if (isInCountdown) {
+    if (isInCountdown && currentState == gameState) {
         if (countdownTimer > 0) {
             countdownTimer -= dt;
             gameControlTextValues[textValueIndex].alpha = Math.sin(rad(180 * (countdownTimer / 2)));
-        } 
+        }
         if (countdownTimer <= 0) {
             countdownTimer = 1;
             gameControlTextValues[textValueIndex].visible = false;

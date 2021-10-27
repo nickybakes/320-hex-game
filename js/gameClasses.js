@@ -112,7 +112,7 @@ class Hexagon extends PIXI.Graphics {
     }
 
     rotateCW() {
-        if (rotationCoolDown > 0 || hexFallAnimationTime > 0)
+        if (rotationCoolDown > 0 || hexFallAnimationTime > 0 || isInCountdown)
             return;
 
         if (this.currentRotationVelocity == 0) {
@@ -123,7 +123,7 @@ class Hexagon extends PIXI.Graphics {
     }
 
     rotateCCW() {
-        if (rotationCoolDown > 0 || hexFallAnimationTime > 0)
+        if (rotationCoolDown > 0 || hexFallAnimationTime > 0 || isInCountdown)
             return;
 
         if (this.currentRotationVelocity == 0) {
@@ -146,7 +146,7 @@ class Hexagon extends PIXI.Graphics {
             this.falling = false;
         }
 
-        if (hexFallAnimationTime > 0)
+        if (hexFallAnimationTime > 0 || isInCountdown)
             return;
 
         if (highlightedHex == this) {
@@ -397,7 +397,7 @@ class Hexagon extends PIXI.Graphics {
         //visually highlight the hex
         //e.target.alpha = 1.5;
 
-        if (hexFallAnimationTime > 0 || hexBreakAnimationTime > 0)
+        if (hexFallAnimationTime > 0 || hexBreakAnimationTime > 0 || isInCountdown)
             return;
 
         //if we have dragged onto this hex
@@ -442,7 +442,7 @@ class Hexagon extends PIXI.Graphics {
 
     //when the user clicks on this hexagon, start dragging the handle to the mouse positon
     onDragStart(e) {
-        if (hexFallAnimationTime > 0 || hexBreakAnimationTime > 0)
+        if (hexFallAnimationTime > 0 || hexBreakAnimationTime > 0 || isInCountdown)
             return;
 
         if (this == highlightedHex && dragStartHex == null) {
@@ -513,7 +513,6 @@ class Hexagon extends PIXI.Graphics {
             this.belowPosX = this.posX - 1;
             return findHexAtPos(this.posX - 1, this.posY + 1);
         }
-
     }
 }
 
