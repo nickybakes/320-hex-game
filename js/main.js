@@ -1053,16 +1053,13 @@ function updateLoop() {
     }
 
     // change to only decrease on first click
-    if (gameStarted && currentMode != endlessMode && !isInCountdown) {
+    if (currentState == gameState && gameStarted && currentMode != endlessMode && !isInCountdown) {
         prevTime = currentTimeInSec;
         currentTimeInSec -= dt;
 
-        if(Math.ceil(currentTimeInSec) < Math.ceil(prevTime)){
+        if(currentTimeInSec <= 10 && Math.ceil(currentTimeInSec) < Math.ceil(prevTime)){
             timerSound.play();
-
-            if(currentTimeInSec <= 10){
-                flashText();
-            }
+            flashText();
         }
 
         if (currentTimeInSec <= 0) {
