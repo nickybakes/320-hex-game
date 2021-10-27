@@ -583,6 +583,7 @@ function setGameState(state) {
                 currentTimeInSec = startTimeInSec;
                 score = 0;
                 scoreTracker.text = 'score: ' + score;
+                isInCountdown = true;
                 recolorHexGrid();
             }
             currentTimeInSec = pausedTime;
@@ -594,7 +595,6 @@ function setGameState(state) {
             pausedTime = currentTimeInSec;
             break;
         case modeState:
-            isInCountdown = true;
             currentTimeInSec = startTimeInSec;
             pausedTime = currentTimeInSec;
             recolorHexGrid();
