@@ -326,7 +326,7 @@ function setupHowToPlay() {
     demoHex1.setColorsAndRotation(3, 1, 2, 0);
     demoHexArray.push(demoHex1);
     let demoHex2 = new Hexagon(getScreenSpaceX(5), getScreenSpaceY(3), 5, 3, hexRadius, 3, null, null);
-    demoHex2.setColorsAndRotation(2, 2, 1, 0);
+    demoHex2.setColorsAndRotation(2, 4, 1, 0);
     demoHexArray.push(demoHex2);
     let demoHex3 = new Hexagon(getScreenSpaceX(7), getScreenSpaceY(3), 7, 3, hexRadius, 2, null, null);
     demoHex3.setColorsAndRotation(3, 2, 4, 0);
@@ -599,7 +599,7 @@ function setGameState(state) {
         case howToPlayState:
             passChildren(howToPlayState);
             demoHexArray[0].setColorsAndRotation(3, 1, 2, 0);
-            demoHexArray[1].setColorsAndRotation(2, 2, 1, 0);
+            demoHexArray[1].setColorsAndRotation(2, 4, 1, 0);
             demoHexArray[2].setColorsAndRotation(3, 2, 4, 0);
             howToPlayTextPopup1.alpha = 0;
             howToPlayTextPopup2.alpha = 0;
@@ -810,8 +810,8 @@ function updateLoop() {
 
 
     // You can hit esc to pause the game now
-    if (keysHeld["27"]) {
-        setGameState(pauseState);
+    if (!keysHeld["27"] && keysReleased["27"]) {
+        currentState == gameState ? setGameState(pauseState) : setGameState(gameState);
     }
 
     //check for E press to rotate hex CW
