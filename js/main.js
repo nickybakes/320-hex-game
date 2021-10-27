@@ -57,6 +57,12 @@ let hexPath = [];
 
 // Demo variables
 let demoHexArray = [];
+
+let countdownTimeMax = 1;
+let countdownTimer = countdownTimeMax;
+let isInCountdown = false;
+let gameControlTextValues = [];
+let textValueIndex = 0;
 // let demoHexPath = [];
 
 let highlightedHex;
@@ -169,6 +175,17 @@ const textStyle2 = new PIXI.TextStyle({
     fill: 0xffffff,
     fontSize: 24,
     fontFamily: "Amaranth",
+});
+const countdownStyle = new PIXI.TextStyle({
+    fill: 0xffeb0b,
+    fontSize: 150,
+    fontFamily: "Amaranth",
+    stroke: true,
+    strokeThickness: 3,
+    dropShadow: true,
+    dropShadowAlpha: 1,
+    dropShadowBlur: 5,
+    dropShadowDistance: 1
 });
 
 let howToPlayTextPopup1;
@@ -473,6 +490,18 @@ function setUpGame() {
     gameScene.addChild(timeTracker);
     gameScene.addChild(scoreTracker);
 
+    gameControlTextValues = [createText('3', 325, 275, countdownStyle), 
+    createText('2', 325, 275, countdownStyle), 
+    createText('1', 325, 275, countdownStyle), 
+    createText('MATCH!', 125, 275, countdownStyle), 
+    createText('TIME!', 200, 275, countdownStyle)];
+
+    for (let textItem of gameControlTextValues) {
+        gameScene.addChild(textItem);
+        textItem.visible = false;
+    }
+    gameControlTextValues[0].visible = true;
+
     // events for drag end
     // app.stage.on('pointerup', onDragEnd);
     window.addEventListener('mouseup', onDragEnd);
@@ -550,6 +579,7 @@ function setGameState(state) {
             if (currentState != pauseState) {
                 currentTimeInSec = startTimeInSec;
                 score = 0;
+                scoreTracker.text = 'score: ' + score;
                 recolorHexGrid();
             }
             currentTimeInSec = pausedTime;
@@ -561,9 +591,9 @@ function setGameState(state) {
             pausedTime = currentTimeInSec;
             break;
         case modeState:
+            isInCountdown = true;
             currentTimeInSec = startTimeInSec;
             pausedTime = currentTimeInSec;
-            score = 0;
             recolorHexGrid();
             break;
         case howToPlayState:
@@ -672,6 +702,27 @@ function updateLoop() {
 
     //get our mouse position
     mousePosition = app.renderer.plugins.interaction.mouse.global;
+
+    if (isInCountdown) {
+        if (countdownTimer > 0) {
+            countdownTimer -= dt;
+            gameControlTextValues[textValueIndex].alpha = Math.sin(rad(180 * (countdownTimer / 2)));
+        } 
+        if (countdownTimer <= 0) {
+            countdownTimer = 1;
+            gameControlTextValues[textValueIndex].visible = false;
+            if (textValueIndex < 3) {
+                textValueIndex++;
+                gameControlTextValues[textValueIndex].visible = true;
+            } else {
+                textValueIndex = 0;
+                isInCountdown = false;
+            }
+            
+        }
+    } else {
+
+    }
 
     // for (let i = 0; i < hexRefractionMasks.length; i++) {
     //     hexRefractionMasks[i].x = hexArray[i].x;
@@ -836,7 +887,7 @@ function updateLoop() {
     }
 
     // change to only decrease on first click
-    if (gameStarted && currentMode != endlessMode) {
+    if (gameStarted && currentMode != endlessMode && !isInCountdown) {
         currentTimeInSec -= dt;
         if (currentTimeInSec <= 0) {
             currentTimeInSec = 0;
@@ -901,7 +952,7 @@ function onDragEnd(e) {
 
     console.log("Drag End (for whole window)");
     let completePath = compareHexes(hexPath);
-    if (completePath && currentState == gameState) {
+    if (completePath && currentState == gameState && !isInCountdown) {
         detectShape(hexPath);
         //start the hex breaking animation
         hexBreakAnimationTime = hexBreakAnimationTimeMax;
