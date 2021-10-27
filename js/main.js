@@ -98,11 +98,14 @@ let currentTimeInSec = startTimeInSec;
 let startCountdown = false;
 let countDown = false;
 let timeTracker = new PIXI.Text('timer', whiteText);
-timeTracker.x = 900;
+timeTracker.x = 800;
+timeTracker.y = 105;
 
 let score = 0;
 let scoreString = 'score: ';
 let scoreTracker = new PIXI.Text('score: ' + score, whiteText);
+scoreTracker.x = 810;
+scoreTracker.y = 205;
 let plusScore = new PIXI.Text('+ 1', whiteText);
 let comboPoints = 0;
 let gameStarted;
