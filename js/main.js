@@ -58,12 +58,14 @@ let hexPath = [];
 // Demo variables
 let demoHexArray = [];
 
+// Countdown vars
 let countdownTimeMax = 1;
 let countdownTimer = countdownTimeMax;
 let isInCountdown = false;
 let gameControlTextValues = [];
 let textValueIndex = 0;
-// let demoHexPath = [];
+// Game over vars
+let isGameOver;
 
 let highlightedHex;
 let dragStartHex;
@@ -576,6 +578,7 @@ function setGameState(state) {
     // Handle anything that needs to run while transitioning between states
     switch (state) {
         case gameState:
+            isGameOver = false;
             if (currentState != pauseState) {
                 currentTimeInSec = startTimeInSec;
                 score = 0;
@@ -890,6 +893,9 @@ function updateLoop() {
     if (gameStarted && currentMode != endlessMode && !isInCountdown) {
         currentTimeInSec -= dt;
         if (currentTimeInSec <= 0) {
+            isGameOver = true;
+
+            // Change this if needed
             currentTimeInSec = 0;
             setGameState(endGameState);
             gameStarted = false;
