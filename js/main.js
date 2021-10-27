@@ -61,7 +61,15 @@ let showHexIcons = true;
 
 // Demo variables
 let demoHexArray = [];
-// let demoHexPath = [];
+
+// Countdown vars
+let countdownTimeMax = 1;
+let countdownTimer = countdownTimeMax;
+let isInCountdown = false;
+let gameControlTextValues = [];
+let textValueIndex = 0;
+// Game over vars
+let isGameOver;
 
 let highlightedHex;
 let dragStartHex;
@@ -79,6 +87,7 @@ let rotationCoolDownMax = .2;
 
 // timer variables
 let startTimeInSec = 30;
+let pausedTime = startTimeInSec;
 let currentTimeInSec = startTimeInSec;
 let gameStarted = false;
 let timeTracker = new PIXI.Text('timer', { fill: 0xffffff });
@@ -209,6 +218,17 @@ const textStyle4 = new PIXI.TextStyle({
     fill: 0xffd900,
     fontSize: 18,
     fontFamily: 'PT Serif',
+});
+const countdownStyle = new PIXI.TextStyle({
+    fill: 0xffeb0b,
+    fontSize: 150,
+    fontFamily: "Amaranth",
+    stroke: true,
+    strokeThickness: 3,
+    dropShadow: true,
+    dropShadowAlpha: 1,
+    dropShadowBlur: 5,
+    dropShadowDistance: 1
 });
 
 let howToPlayTextPopup1;
@@ -545,6 +565,18 @@ function setUpGame() {
     gameScene.addChild(timeTracker);
     gameScene.addChild(scoreTracker);
 
+    gameControlTextValues = [createText('3', 325, 275, countdownStyle), 
+    createText('2', 325, 275, countdownStyle), 
+    createText('1', 325, 275, countdownStyle), 
+    createText('MATCH!', 125, 275, countdownStyle), 
+    createText('TIME!', 200, 275, countdownStyle)];
+
+    for (let textItem of gameControlTextValues) {
+        gameScene.addChild(textItem);
+        textItem.visible = false;
+    }
+    gameControlTextValues[0].visible = true;
+
     // events for drag end
     // app.stage.on('pointerup', onDragEnd);
     window.addEventListener('mouseup', onDragEnd);
@@ -569,11 +601,11 @@ function setUpPause() {
     // Creating the buttons
     let gameStateButton = createStateButton("Back to Game", 75, 180, gameState, buttonStyleLarge);
     pauseScene.addChild(gameStateButton);
-    let modeButton = createStateButton("Change Mode", 75, 240, modeState, buttonStyleLarge);
+    let modeButton = createStateButton("Quit to Mode Select", 75, 240, modeState, buttonStyleLarge);
     pauseScene.addChild(modeButton);
-    let backButton = createStateButton("Return to Menu", 75, 300, titleState, buttonStyleLarge);
-    pauseScene.addChild(backButton);
-    let endGameButton = createStateButton("End Game", 75, 360, endGameState, buttonStyleLarge);
+    // let backButton = createStateButton("Quit to Menu", 75, 300, titleState, buttonStyleLarge);
+    // pauseScene.addChild(backButton);
+    let endGameButton = createStateButton("End Game", 75, 300, endGameState, buttonStyleLarge);
     pauseScene.addChild(endGameButton);
 
     app.stage.addChild(pauseScene);
@@ -595,8 +627,14 @@ function setUpEnd() {
     // howToPlayScene.addChild(createText("High Score: ", 75, 170, textStyle));
 
     // Creating the buttons
-    let backButton = createStateButton("Return to Menu", 170, 500, 0, buttonStyleLarge);
-    endGameScene.addChild(backButton);
+    let backToMenuButton = createStateButton("Return to Menu", 170, 500, modeState, buttonStyleLarge);
+    endGameScene.addChild(backToMenuButton);
+
+    let scoreText = createText(`Final Score: ${score}`, 170, 300, buttonStyleLarge);
+    endGameScene.addChild(scoreText);
+
+    // let backButton = createStateButton("Return to Menu", 75, 300, titleState, buttonStyleLarge);
+    // endGameScene.addChild(backButton);
 
     app.stage.addChild(endGameScene);
 }
@@ -609,19 +647,32 @@ function setGameState(state) {
     //2 - game
     //3 - pause
     //4 - endgame
-
+    
     // Handle anything that needs to run while transitioning between states
     switch (state) {
         case gameState:
+            isGameOver = false;
             if (currentState != pauseState) {
-                recolorHexGrid();
                 currentTimeInSec = startTimeInSec;
                 score = 0;
+                scoreTracker.text = 'score: ' + score;
+                recolorHexGrid();
             }
+            currentTimeInSec = pausedTime;
             passChildren(gameState);
             backgroundRefractionGraphic.alpha = .02;
             challengeComplete1;
             challengeComplete2;
+            gameStarted = true;
+            break;
+        case pauseState:
+            pausedTime = currentTimeInSec;
+            break;
+        case modeState:
+            isInCountdown = true;
+            currentTimeInSec = startTimeInSec;
+            pausedTime = currentTimeInSec;
+            recolorHexGrid();
             break;
         case howToPlayState:
             passChildren(howToPlayState);
@@ -753,6 +804,27 @@ function updateLoop() {
     //get our mouse position
     mousePosition = app.renderer.plugins.interaction.mouse.global;
 
+    if (isInCountdown) {
+        if (countdownTimer > 0) {
+            countdownTimer -= dt;
+            gameControlTextValues[textValueIndex].alpha = Math.sin(rad(180 * (countdownTimer / 2)));
+        } 
+        if (countdownTimer <= 0) {
+            countdownTimer = 1;
+            gameControlTextValues[textValueIndex].visible = false;
+            if (textValueIndex < 3) {
+                textValueIndex++;
+                gameControlTextValues[textValueIndex].visible = true;
+            } else {
+                textValueIndex = 0;
+                isInCountdown = false;
+            }
+            
+        }
+    } else {
+
+    }
+
     // for (let i = 0; i < hexRefractionMasks.length; i++) {
     //     hexRefractionMasks[i].x = hexArray[i].x;
     //     hexRefractionMasks[i].y = hexArray[i].y;
@@ -853,8 +925,8 @@ function updateLoop() {
 
 
     // You can hit esc to pause the game now
-    if (keysHeld["27"]) {
-        setGameState(pauseState);
+    if (!keysHeld["27"] && keysReleased["27"]) {
+        currentState == gameState ? setGameState(pauseState) : setGameState(gameState);
     }
 
     //check for E press to rotate hex CW
@@ -930,11 +1002,15 @@ function updateLoop() {
     }
 
     // change to only decrease on first click
-    if (gameStarted && currentMode != endlessMode) {
+    if (gameStarted && currentMode != endlessMode && !isInCountdown) {
         currentTimeInSec -= dt;
         if (currentTimeInSec <= 0) {
+            isGameOver = true;
+
+            // Change this if needed
             currentTimeInSec = 0;
-            // END GAME
+            setGameState(endGameState);
+            gameStarted = false;
         }
     }
     currentMode != endlessMode ? timeTracker.text = secondsToTimeString(currentTimeInSec) : timeTracker.text = ``;
@@ -994,8 +1070,7 @@ function onDragEnd(e) {
 
     //console.log("Drag End (for whole window)");
     let completePath = compareHexes(hexPath);
-    if (completePath && currentState == gameState) {
-        //console.log("here");
+    if (completePath && currentState == gameState && !isInCountdown) {
         detectShape(hexPath);
         //start the hex breaking animation
         hexBreakAnimationTime = hexBreakAnimationTimeMax;
