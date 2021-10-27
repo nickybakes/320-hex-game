@@ -27,6 +27,17 @@ let pauseScene;
 let endGameScene;
 let scenes = [];
 
+// sounds
+let buttonSound = new Howl({
+    src: ['media/buttonClick.mp3']
+});
+let timerSound = new Howl({
+    src: ['media/timerTick.mp3']
+});
+let breakSound = new Howl({
+    src: ['media/break.mp3']
+});
+
 // As close to an enum as we're gonna get with no TypeScript :(
 const titleState = 0;
 const howToPlayState = 1;
@@ -95,17 +106,20 @@ const redText = new PIXI.TextStyle({
 let startTimeInSec = 30;
 let pausedTime = startTimeInSec;
 let currentTimeInSec = startTimeInSec;
+let prevTime = currentTimeInSec;
 let startCountdown = false;
 let countDown = false;
 let timeTracker = new PIXI.Text('timer', whiteText);
 timeTracker.x = 800;
 timeTracker.y = 105;
+timeTracker.style.fontFamily = "PT Serif";
 
 let score = 0;
 let scoreString = 'score: ';
 let scoreTracker = new PIXI.Text('score: ' + score, whiteText);
 scoreTracker.x = 810;
 scoreTracker.y = 205;
+scoreTracker.style.fontFamily = "PT Serif";
 let plusScore = new PIXI.Text('+ 1', whiteText);
 let comboPoints = 0;
 let gameStarted;
@@ -200,6 +214,15 @@ const buttonStyleLarge = new PIXI.TextStyle({
     dropShadowBlur: 5,
     dropShadowDistance: 1
 });
+const finalScoreStyle = new PIXI.TextStyle({
+    fill: 0xc7c7c7,
+    fontSize: 150,
+    fontFamily: 'PT Serif',
+    dropShadow: true,
+    dropShadowAlpha: 1,
+    dropShadowBlur: 5,
+    dropShadowDistance: 1
+});
 const buttonStyleMedium = new PIXI.TextStyle({
     fill: 0xc7c7c7,
     fontSize: 37,
@@ -254,6 +277,8 @@ const countdownStyle = new PIXI.TextStyle({
 
 let howToPlayTextPopup1;
 let howToPlayTextPopup2;
+
+let scoreNumber;
 
 //once finished, call the setUpGame function
 app.loader.onComplete.add(setupScenes);
@@ -379,6 +404,8 @@ function setUpTitle() {
 
 //Plays a little rainbow effect when the Play button is clicked on the title screen
 function playButtonClick(){
+    buttonSound.play();
+
     for (let i = 0; i < 6; i++) {
         let particle = new HexBreakParticleSystem(160 + i * 80, 330, i, i, i);
         hexBreakParticles.push(particle);
@@ -636,19 +663,19 @@ function setUpPause() {
     pauseScene.addChild(createSprite('media/background-panel.png', 0.5, 0.5, 512, 288));
 
     // Creating the logo
-    let logo = createSprite('media/pause-logo.png', 0, 0, 240, 50);
+    let logo = createSprite('media/pause-logo.png', 0, 0, 260, 70);
     logo.width = 250;
     logo.height = 80;
     pauseScene.addChild(logo);
 
     // Creating the buttons
-    let gameStateButton = createStateButton("Back to Game", 75, 180, gameState, buttonStyleLarge);
+    let gameStateButton = createStateButton("Back to Game", 129, 200, gameState, buttonStyleLarge);
     pauseScene.addChild(gameStateButton);
-    let modeButton = createStateButton("Quit to Mode Select", 75, 240, modeState, buttonStyleLarge);
+    let modeButton = createStateButton("Quit to Mode Select", 129, 260, modeState, buttonStyleLarge);
     pauseScene.addChild(modeButton);
     // let backButton = createStateButton("Quit to Menu", 75, 300, titleState, buttonStyleLarge);
     // pauseScene.addChild(backButton);
-    let endGameButton = createStateButton("End Game", 75, 300, endGameState, buttonStyleLarge);
+    let endGameButton = createStateButton("End Game", 129, 320, endGameState, buttonStyleLarge);
     pauseScene.addChild(endGameButton);
 
     app.stage.addChild(pauseScene);
@@ -660,7 +687,7 @@ function setUpEnd() {
     endGameScene.addChild(createSprite('media/background-panel.png', 0.5, 0.5, 512, 288));
 
     // Creating the logo
-    let logo = createSprite('media/game-over-logo.png', 0, 0, 115, 50);
+    let logo = createSprite('media/game-over-logo.png', 0, 0, 115, 70);
     logo.width = 500;
     logo.height = 80;
     endGameScene.addChild(logo);
@@ -670,11 +697,15 @@ function setUpEnd() {
     // howToPlayScene.addChild(createText("High Score: ", 75, 170, textStyle));
 
     // Creating the buttons
-    let backToMenuButton = createStateButton("Return to Menu", 170, 500, modeState, buttonStyleLarge);
+    let backToMenuButton = createStateButton("Return to Menu", 170, 480, modeState, buttonStyleLarge);
     endGameScene.addChild(backToMenuButton);
 
-    let scoreText = createText(`Final Score: ${score}`, 170, 300, buttonStyleLarge);
+    let scoreText = createText(`Final Score:`, 215, 240, buttonStyleLarge);
+    // 40px left per digit
+    scoreNumber = createText(`${score}`, 360, 350, finalScoreStyle);
+    scoreNumber.anchor.x = 0.5;
     endGameScene.addChild(scoreText);
+    endGameScene.addChild(scoreNumber);
 
     // let backButton = createStateButton("Return to Menu", 75, 300, titleState, buttonStyleLarge);
     // endGameScene.addChild(backButton);
@@ -738,6 +769,9 @@ function setGameState(state) {
             howToPlayTextPopup1.alpha = 0;
             howToPlayTextPopup2.alpha = 0;
             backgroundRefractionGraphic.alpha = 0;
+            break;
+        case endGameState:
+            
             break;
         default:
             isInCountdown = false;
@@ -853,7 +887,7 @@ function createStateButton(text, x, y, targetState, style = buttonStyleLarge) {
     button.interactive = true;
     button.buttonMode = true;
     //when the user clicks down, set our selected button to this one
-    // button.on('pointerdown', function (e) { selectedButton = button });
+     button.on('pointerdown', function (e) { buttonSound.play(); });
     //when the user releases the click; if this is the same button their clicked down on, then call its function!
     button.on('pointerup', function (e) { setGameState(targetState); });
     //if the user hovers over the button, change alpha
@@ -1100,7 +1134,17 @@ function updateLoop() {
 
     // change to only decrease on first click
     if (gameStarted && currentMode != endlessMode && !isInCountdown) {
+        prevTime = currentTimeInSec;
         currentTimeInSec -= dt;
+
+        if(Math.ceil(currentTimeInSec) < Math.ceil(prevTime)){
+            timerSound.play();
+
+            if(currentTimeInSec <= 10){
+                flashText();
+            }
+        }
+
         if (currentTimeInSec <= 0) {
             isGameOver = true;
 
@@ -1113,9 +1157,6 @@ function updateLoop() {
 
     //controlling time text HUD
     currentMode != endlessMode ? timeTracker.text = secondsToTimeString(currentTimeInSec) : timeTracker.text = ``;
-    if(currentTimeInSec <= 10 && (Math.round(currentTimeInSec * 100) / 100) % 1 == 0){
-        flashText();
-    }
 
     timeTracker.text = secondsToTimeString(currentTimeInSec);
 
@@ -1151,6 +1192,8 @@ function breakHex(hex) {
     scoreTracker.text = scoreString + score;
 
     currentTimeInSec++;
+
+    breakSound.play();
 
     //spawn a break hex particle
     let particle = new HexBreakParticleSystem(hex.x, hex.y, hex.colorIndices[0], hex.colorIndices[1], hex.colorIndices[2]);
