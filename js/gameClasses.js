@@ -699,7 +699,7 @@ class WrongMoveIndicator extends PIXI.Graphics {
 //looks like it visually exploded
 class HexBreakParticleSystem extends PIXI.Graphics {
 
-    colorsRGB = [{ r: 255, g: 0, b: 0 }, { r: 245, g: 139, b: 0 }, { r: 255, g: 208, b: 0 }, { r: 0, g: 145, b: 0 }, { r: 0, g: 110, b: 255 }, { r: 116, g: 0, b: 184 }];
+    colorsRGB = [{ r: 255, g: 0, b: 0 }, { r: 245, g: 139, b: 0 }, { r: 255, g: 208, b: 0 }, { r: 0, g: 145, b: 0 }, { r: 0, g: 110, b: 255 }, { r: 116, g: 0, b: 184 }, { r: 168, g: 168, b: 168 }, { r: 255, g: 244, b: 122 }, { r: 255, g: 0, b: 128 }];
 
     brokenPieces = [];
 
