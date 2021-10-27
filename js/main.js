@@ -86,18 +86,26 @@ let rotationCoolDown;
 let rotationCoolDownMax = .2;
 
 // timer variables
+const whiteText = new PIXI.TextStyle({
+    fill: "white"
+});
+const redText = new PIXI.TextStyle({
+    fill: "#d10023"
+});
 let startTimeInSec = 30;
 let pausedTime = startTimeInSec;
 let currentTimeInSec = startTimeInSec;
-let gameStarted = false;
-let timeTracker = new PIXI.Text('timer', { fill: 0xffffff });
+let startCountdown = false;
+let countDown = false;
+let timeTracker = new PIXI.Text('timer', whiteText);
 timeTracker.x = 900;
 
 let score = 0;
 let scoreString = 'score: ';
-let scoreTracker = new PIXI.Text('score: ' + score, { fill: 0xffffff });
-//timeTracker.x = 800;
-//timeTracker.y = 200;
+let scoreTracker = new PIXI.Text('score: ' + score, whiteText);
+let plusScore = new PIXI.Text('+ 1', whiteText);
+let comboPoints = 0;
+let gameStarted;
 
 //time during falling animation of hexes falling 1 row,
 //set to -1 if no longer falling at all
@@ -900,6 +908,8 @@ function updateLoop() {
 
     //break the hexes sequentially, in order they are in the path
     if (hexBreakAnimationTime > 0) {
+        countDown = false;
+
         hexBreakAnimationTime -= frameTime;
         hexBreakAnimationTimePerHex -= frameTime;
         if (hexPath.length > 0 && hexBreakAnimationTimePerHex <= 0) {
@@ -998,6 +1008,8 @@ function updateLoop() {
             for (let i = 0; i < hexGridWidth / 2; i++) {
                 columnWaitAmount[i] = 0;
             }
+
+            countDown = true;
         }
     }
 
@@ -1014,6 +1026,20 @@ function updateLoop() {
         }
     }
     currentMode != endlessMode ? timeTracker.text = secondsToTimeString(currentTimeInSec) : timeTracker.text = ``;
+    // decrease timer
+    if(startCountdown && countDown){
+        currentTimeInSec -= dt;
+        if(currentTimeInSec <= 0){
+            currentTimeInSec = -0.1;
+            setGameState(4);
+        }
+    }
+
+    if(currentTimeInSec <= 10 && (Math.round(currentTimeInSec * 100) / 100) % 1 == 0){
+        flashText();
+    }
+
+    timeTracker.text = secondsToTimeString(currentTimeInSec);
 
     //reset our controls for next frame
     keysReleased = [];
@@ -1041,6 +1067,13 @@ function findHexAtPos(x, y) {
 //rerolls its color values, so it looks like a completely new, random hex
 //has been spawned in from up above
 function breakHex(hex) {
+    //update score and timer
+    score++;
+    plusScore.text = "+1";
+    scoreTracker.text = scoreString + score;
+
+    currentTimeInSec++;
+
     //spawn a break hex particle
     let particle = new HexBreakParticleSystem(hex.x, hex.y, hex.colorIndices[0], hex.colorIndices[1], hex.colorIndices[2]);
     hexBreakParticles.push(particle);
@@ -1058,12 +1091,15 @@ function breakHex(hex) {
     hex.y = getScreenSpaceY(hex.posY);
     hex.falling = true;
     hex.randomizeColors();
+
+    addScoreAnimation(hex.x, hex.y);
 }
 
 
 //when  the user stops dragging the handle
 function onDragEnd(e) {
-    gameStarted = true;
+    startCountdown = true;
+    countDown = true;
 
     if (hexFallAnimationTime > 0 || hexBreakAnimationTime > 0)
         return;
@@ -1071,7 +1107,7 @@ function onDragEnd(e) {
     //console.log("Drag End (for whole window)");
     let completePath = compareHexes(hexPath);
     if (completePath && currentState == gameState && !isInCountdown) {
-        detectShape(hexPath);
+        //detectShape(hexPath);
         //start the hex breaking animation
         hexBreakAnimationTime = hexBreakAnimationTimeMax;
         hexBreakAnimationTimeMaxPerHex = hexBreakAnimationTimeMax / hexPath.length;
@@ -1086,12 +1122,6 @@ function onDragEnd(e) {
 
         hexBreakAnimationTimePerHex = 0;
         hexBreakAnimationTime += .1;
-
-        // score and timer
-        score += hexPath.length;
-        scoreTracker.text = scoreString + score;
-
-        currentTimeInSec += hexPath.length; // currently add one sec for each hex
 
         pathIndicator.clear();
         pathIndicator2.clear();
@@ -1224,4 +1254,24 @@ function createBg(texture, scene) {
 
     //return it
     return tiling;
+}
+
+// flash timer text
+function flashText(){
+    if(timeTracker.style == whiteText){
+        timeTracker.style = redText;
+    }
+    else{
+        timeTracker.style = whiteText;
+    }
+}
+
+function addScoreAnimation(posX, posY){
+    console.log("AA");
+    plusScore.x = posX;
+    plusScore.y = posY;
+    gameScene.addChild(plusScore);
+    for(let i = 10; i > 0; i--){
+        plusScore.y -= i;
+    }
 }
