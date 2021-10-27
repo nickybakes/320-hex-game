@@ -100,12 +100,14 @@ let countDown = false;
 let timeTracker = new PIXI.Text('timer', whiteText);
 timeTracker.x = 800;
 timeTracker.y = 105;
+timeTracker.style.fontFamily = "PT Serif";
 
 let score = 0;
 let scoreString = 'score: ';
 let scoreTracker = new PIXI.Text('score: ' + score, whiteText);
 scoreTracker.x = 810;
 scoreTracker.y = 205;
+scoreTracker.style.fontFamily = "PT Serif";
 let plusScore = new PIXI.Text('+ 1', whiteText);
 let comboPoints = 0;
 let gameStarted;
