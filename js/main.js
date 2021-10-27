@@ -405,7 +405,7 @@ function setupHowToPlay() {
     // Adding a stage background
     howToPlayScene.addChild(createSprite('media/background-panel-menu.png', 0.5, 0.5, 512, 288));
 
-    howToPlayScene.addChild(createText("Drag your mouse between segments of the same color to make a match! Press Q and E to rotate hexes. Make longer paths of hexes for more points! Try finding a way to connect all 3 of these hexes with a path!", 129, 200, textStyle));
+    howToPlayScene.addChild(createText("You are a wizard building a spell from multiple magical elements. Combine them by drawing lines between sections that share a color or icon. You can match multiple colors in one path!", 129, 200, textStyle));
     //"Try to get ALL THREE in one go!";
     //The colors only need to match between 2 adjacent segments.
     howToPlayTextPopup1 = createText("Try to get ALL THREE in one go!", 190, 410, textStyle2);
