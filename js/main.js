@@ -190,6 +190,15 @@ const buttonStyleLarge = new PIXI.TextStyle({
     dropShadowBlur: 5,
     dropShadowDistance: 1
 });
+const finalScoreStyle = new PIXI.TextStyle({
+    fill: 0xc7c7c7,
+    fontSize: 150,
+    fontFamily: 'PT Serif',
+    dropShadow: true,
+    dropShadowAlpha: 1,
+    dropShadowBlur: 5,
+    dropShadowDistance: 1
+});
 const buttonStyleMedium = new PIXI.TextStyle({
     fill: 0xc7c7c7,
     fontSize: 37,
@@ -241,6 +250,8 @@ const countdownStyle = new PIXI.TextStyle({
 
 let howToPlayTextPopup1;
 let howToPlayTextPopup2;
+
+let scoreNumber;
 
 //once finished, call the setUpGame function
 app.loader.onComplete.add(setupScenes);
@@ -601,19 +612,19 @@ function setUpPause() {
     pauseScene.addChild(createSprite('media/background-panel.png', 0.5, 0.5, 512, 288));
 
     // Creating the logo
-    let logo = createSprite('media/pause-logo.png', 0, 0, 240, 50);
+    let logo = createSprite('media/pause-logo.png', 0, 0, 260, 70);
     logo.width = 250;
     logo.height = 80;
     pauseScene.addChild(logo);
 
     // Creating the buttons
-    let gameStateButton = createStateButton("Back to Game", 75, 180, gameState, buttonStyleLarge);
+    let gameStateButton = createStateButton("Back to Game", 129, 200, gameState, buttonStyleLarge);
     pauseScene.addChild(gameStateButton);
-    let modeButton = createStateButton("Quit to Mode Select", 75, 240, modeState, buttonStyleLarge);
+    let modeButton = createStateButton("Quit to Mode Select", 129, 260, modeState, buttonStyleLarge);
     pauseScene.addChild(modeButton);
     // let backButton = createStateButton("Quit to Menu", 75, 300, titleState, buttonStyleLarge);
     // pauseScene.addChild(backButton);
-    let endGameButton = createStateButton("End Game", 75, 300, endGameState, buttonStyleLarge);
+    let endGameButton = createStateButton("End Game", 129, 320, endGameState, buttonStyleLarge);
     pauseScene.addChild(endGameButton);
 
     app.stage.addChild(pauseScene);
@@ -625,7 +636,7 @@ function setUpEnd() {
     endGameScene.addChild(createSprite('media/background-panel.png', 0.5, 0.5, 512, 288));
 
     // Creating the logo
-    let logo = createSprite('media/game-over-logo.png', 0, 0, 115, 50);
+    let logo = createSprite('media/game-over-logo.png', 0, 0, 115, 70);
     logo.width = 500;
     logo.height = 80;
     endGameScene.addChild(logo);
@@ -635,11 +646,15 @@ function setUpEnd() {
     // howToPlayScene.addChild(createText("High Score: ", 75, 170, textStyle));
 
     // Creating the buttons
-    let backToMenuButton = createStateButton("Return to Menu", 170, 500, modeState, buttonStyleLarge);
+    let backToMenuButton = createStateButton("Return to Menu", 170, 480, modeState, buttonStyleLarge);
     endGameScene.addChild(backToMenuButton);
 
-    let scoreText = createText(`Final Score: ${score}`, 170, 300, buttonStyleLarge);
+    let scoreText = createText(`Final Score:`, 215, 240, buttonStyleLarge);
+    // 40px left per digit
+    scoreNumber = createText(`${score}`, 360, 350, finalScoreStyle);
+    scoreNumber.anchor.x = 0.5;
     endGameScene.addChild(scoreText);
+    endGameScene.addChild(scoreNumber);
 
     // let backButton = createStateButton("Return to Menu", 75, 300, titleState, buttonStyleLarge);
     // endGameScene.addChild(backButton);
@@ -690,6 +705,9 @@ function setGameState(state) {
             howToPlayTextPopup1.alpha = 0;
             howToPlayTextPopup2.alpha = 0;
             backgroundRefractionGraphic.alpha = 0;
+            break;
+        case endGameState:
+            
             break;
         default:
             backgroundRefractionGraphic.alpha = .07;
