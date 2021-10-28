@@ -116,11 +116,13 @@ function compareHexes(hexPath) {
     if (hexPath.length <= 1)
         return false;
 
+    let directionArray = [];
+
     for (let i = 0; i < hexPath.length - 1; i++) {
         let startIndexHexCurrent = moveIntoRange(hexPath[i].wantedRotationValue, 0, 6);
         let startIndexHexNext = moveIntoRange(hexPath[i + 1].wantedRotationValue, 0, 6);
-        for(let j = 0; j < 6; j++){
-            if (hexPath[i + 1].posX - hexPath[i].posX == positionDifferences[j].x && hexPath[i + 1].posY - hexPath[i].posY == positionDifferences[j].y){
+        for (let j = 0; j < 6; j++) {
+            if (hexPath[i + 1].posX - hexPath[i].posX == positionDifferences[j].x && hexPath[i + 1].posY - hexPath[i].posY == positionDifferences[j].y) {
                 //j represents the index of the segment of the FIRST (current) hex we want to compare to with the next one
                 //j + 3 (but moved into range 0 - 6 not including 6) represents the segment we want to use on the NEXT hex in the path
                 //we add j to both of the hexes' "startIndex" which is based on its rotational value, so that we are checking
@@ -131,9 +133,9 @@ function compareHexes(hexPath) {
 
                 //Knowing that j represents the direction of the path, we can use it to find shapes drawn within the path, maybe add j to a list and for every
                 //hex we check, we see if the list of j's (directions) is the same needed for a shape. If one j breaks the shape, then we clea rthat list and start again
-                
+
                 //if the 2 segments dont match, then we return false!
-                if (hexPath[i].hexagonValues[moveIntoRange(j - startIndexHexCurrent, 0, 6)] != hexPath[i + 1].hexagonValues[moveIntoRange(j - startIndexHexNext + 3, 0, 6)]){
+                if (hexPath[i].hexagonValues[moveIntoRange(j - startIndexHexCurrent, 0, 6)] != hexPath[i + 1].hexagonValues[moveIntoRange(j - startIndexHexNext + 3, 0, 6)]) {
                     wrongMovePositionAndDirection = {
                         posX: hexPath[i].posX,
                         posY: hexPath[i].posY,
@@ -142,9 +144,17 @@ function compareHexes(hexPath) {
                     };
                     return false;
                 }
+                directionArray.push(j);
             }
         }
     }
+    if (!challengeComplete1) {
+        challengeComplete1 = challengeCheckerFunctions[challengeIndex1](directionArray);
+    }
+    if (!challengeComplete2) {
+        challengeComplete2 = challengeCheckerFunctions[challengeIndex2](directionArray);
+    }
+
     //if no "non matches" were found in the path, then the path must be good, and we can return True!
     return true;
 }
@@ -158,7 +168,7 @@ function compareHexes(hexPath) {
 //     for (let i = 0; i < hexPath.length - 1; i++) {
 //         relativePath.push([hexPath[i + 1].posX - hexPath[i].posX, hexPath[i + 1].posY - hexPath[i].posY])
 //     }
-    
+
 //     //run it through all the possible shapes
 
 //     //triangle destorys a random row
@@ -182,7 +192,7 @@ function compareHexes(hexPath) {
 //         //             breakHex(hex);
 //         //         }
 //         //     }
-            
+
 //         }
 //     }
 
@@ -198,7 +208,7 @@ function compareHexes(hexPath) {
 //         //         randomY = Math.floor(Math.random() * 6)
 //         //         hex = findHexAtPos(randomX, randomY)
 //         //     }
-            
+
 //         //     breakHex(hex);
 //         // }
 //     }
@@ -215,7 +225,7 @@ function compareHexes(hexPath) {
 //         //     }
 //         // }
 //     }
-    
+
 //     //Trapezoid does a cool diagonal thing along the sides (WIP)
 //     if (detectTrapezoid(relativePath)) {
 //         console.log("trapezoid");
@@ -233,12 +243,12 @@ function compareHexes(hexPath) {
 //         //         startY = hexPath[i].posY;
 //         //     }
 //         // }
-        
+
 //         // let hexL = findHexAtPos(maxRight, startY);
 //         // let hexR = findHexAtPos(maxLeft, startY);
-        
+
 //         // for (let i = 1; i < 12; i++) {
-            
+
 //         //     if (hexR != null) {
 //         //         if (hexR.posX != 12) {
 //         //             hexR = findHexAtPos(maxRight + i, startY + i)
@@ -256,9 +266,9 @@ function compareHexes(hexPath) {
 //         //         }
 //         //     }
 //         // }
-        
+
 //     }
-    
+
 //     //IDK what should happen
 //     if(detectPentagram(relativePath))
 //     {
@@ -272,160 +282,244 @@ function compareHexes(hexPath) {
 //         breakAllHexes();
 //     }
 
-function checkForTriangle(){
-
-}
-function checkForRhombus() {
-
-}
-function checkForDiamond() {
-
-}
-function checkForLightning() {
-
-}
-function checkForW() {
-
-}
-function checkForFlower() {
-
-}
-
-//checks path made by player and sees if it follows any triangel patterns
-function detectTriangle(relativePath)
-{
-    let possibleTriangles = [
-        [[-1,1],[2,0]],
-        [[1,1],[-2,0]],  
-        [[1,-1],[1,1]],
-        [[2,0],[-1,-1]],
-        [[-1,-1],[-1,1]],
-        [[-2,0],[1,-1]],  
-        [[2,0],[-1,1]],   
-        [[-2,0],[1,1]],
-        [[-1,-1],[2,0]],
-        [[1,-1],[-2,0]],
-        [[1,1],[1,-1]],
-        [[-1,1],[-1,-1]],
-    ];
-   for(let i = 0; i < possibleTriangles.length; i++)
-   {
-    if(equalArray(relativePath,possibleTriangles[i]))
-    { 
-        return true;
+function checkForTriangle(directionArray) {
+    for (let i = 0; i < directionArray.length - 1; i++) {
+        if (moveIntoRange(directionArray[i] - 2, 0, 6) == directionArray[i + 1] || moveIntoRange(directionArray[i] + 2, 0, 6) == directionArray[i + 1]) {
+            return true;
+        }
     }
-   }
+    return false;
+}
+function checkForRhombus(directionArray) {
+    if (directionArray.length < 3)
+        return false;
+
+    for (let i = 0; i < directionArray.length; i++) {
+        if (directionArray[i] == 4 && directionArray[moveIntoRange(i + 2, 0, directionArray.length)] == 1) {
+            return true;
+        }
+        if (directionArray[i] == 4 && directionArray[moveIntoRange(i - 2, 0, directionArray.length)] == 1) {
+            return true;
+        }
+        if (directionArray[i] == 5 && directionArray[moveIntoRange(i + 2, 0, directionArray.length)] == 2) {
+            if (directionArray[moveIntoRange(i + 1, 0, directionArray.length)] == 4 || directionArray[moveIntoRange(i + 1, 0, directionArray.length)] == 1) {
+                return true;
+            }
+        }
+        if (directionArray[i] == 5 && directionArray[moveIntoRange(i - 2, 0, directionArray.length)] == 2) {
+            if (directionArray[moveIntoRange(i - 1, 0, directionArray.length)] == 4 || directionArray[moveIntoRange(i - 1, 0, directionArray.length)] == 1) {
+                return true;
+            }
+        }
+        if (directionArray[i] == 3 && directionArray[moveIntoRange(i + 2, 0, directionArray.length)] == 0) {
+            if (directionArray[moveIntoRange(i + 1, 0, directionArray.length)] == 4 || directionArray[moveIntoRange(i + 1, 0, directionArray.length)] == 1) {
+                return true;
+            }
+        }
+        if (directionArray[i] == 3 && directionArray[moveIntoRange(i - 2, 0, directionArray.length)] == 0) {
+            if (directionArray[moveIntoRange(i - 1, 0, directionArray.length)] == 4 || directionArray[moveIntoRange(i - 1, 0, directionArray.length)] == 1) {
+                return true;
+            }
+        }
+    }
+    return false;
+}
+function checkForDiamond(directionArray) {
+    if (directionArray.length < 3)
+        return false;
+
+    for (let i = 0; i < directionArray.length; i++) {
+        if (directionArray[i] == 2 && directionArray[moveIntoRange(i + 2, 0, directionArray.length)] == 5) {
+            if (directionArray[moveIntoRange(i + 1, 0, directionArray.length)] == 0 || directionArray[moveIntoRange(i + 1, 0, directionArray.length)] == 3) {
+                return true;
+            }
+        }
+        if (directionArray[i] == 2 && directionArray[moveIntoRange(i - 2, 0, directionArray.length)] == 5) {
+            if (directionArray[moveIntoRange(i - 1, 0, directionArray.length)] == 0 || directionArray[moveIntoRange(i - 1, 0, directionArray.length)] == 3) {
+                return true;
+            }
+        }
+        if (directionArray[i] == 3 && directionArray[moveIntoRange(i + 2, 0, directionArray.length)] == 0) {
+            if (directionArray[moveIntoRange(i + 1, 0, directionArray.length)] == 2 || directionArray[moveIntoRange(i + 1, 0, directionArray.length)] == 5) {
+                return true;
+            }
+        }
+        if (directionArray[i] == 3 && directionArray[moveIntoRange(i - 2, 0, directionArray.length)] == 0) {
+            if (directionArray[moveIntoRange(i - 1, 0, directionArray.length)] == 2 || directionArray[moveIntoRange(i - 1, 0, directionArray.length)] == 5) {
+                return true;
+            }
+        }
+    }
+    return false;
+}
+function checkForLightning(directionArray) {
+    if (directionArray.length < 3)
+        return false;
+
+    for (let i = 0; i < directionArray.length; i++) {
+        if (directionArray[i] == 5 && directionArray[moveIntoRange(i + 2, 0, directionArray.length)] == 5 ||
+            directionArray[i] == 3 && directionArray[moveIntoRange(i + 2, 0, directionArray.length)] == 3) {
+            if (directionArray[moveIntoRange(i + 1, 0, directionArray.length)] == 1) {
+                return true;
+            }
+        }
+        if (directionArray[i] == 0 && directionArray[moveIntoRange(i + 2, 0, directionArray.length)] == 0 ||
+            directionArray[i] == 2 && directionArray[moveIntoRange(i + 2, 0, directionArray.length)] == 2) {
+            if (directionArray[moveIntoRange(i + 1, 0, directionArray.length)] == 4) {
+                return true;
+            }
+        }
+    }
+    return false;
+
+}
+function checkForW(directionArray) {
+    if (directionArray.length < 4)
+        return false;
+
+    for (let i = 0; i < directionArray.length - 3; i++) {
+        if (directionArray[i] == 0){
+            let good = true;
+            for (let j = 1; j < 4; j++) {
+                if (directionArray[i + j] != 2 * (Math.trunc(j % 2))) {
+                    good = false;
+                }
+            }
+            if(good){
+                return true;
+            }
+        }
+        if (directionArray[i] == 5) {
+            let good = true;
+            for (let j = 1; j < 4; j++) {
+                if (directionArray[i + j] == 4 + ((2 * (Math.trunc(j % 2))) - 1)) {
+                    good = false;
+                }
+            }
+            if (good) {
+                return true;
+            }
+        }
+    }
+    return false;
+}
+//checks path made by player and sees if it follows any triangel patterns
+function detectTriangle(relativePath) {
+    let possibleTriangles = [
+        [[-1, 1], [2, 0]],
+        [[1, 1], [-2, 0]],
+        [[1, -1], [1, 1]],
+        [[2, 0], [-1, -1]],
+        [[-1, -1], [-1, 1]],
+        [[-2, 0], [1, -1]],
+        [[2, 0], [-1, 1]],
+        [[-2, 0], [1, 1]],
+        [[-1, -1], [2, 0]],
+        [[1, -1], [-2, 0]],
+        [[1, 1], [1, -1]],
+        [[-1, 1], [-1, -1]],
+    ];
+    for (let i = 0; i < possibleTriangles.length; i++) {
+        if (equalArray(relativePath, possibleTriangles[i])) {
+            return true;
+        }
+    }
 }
 
 //checks path made by player and sees if it follows any pentagram patterns
-function detectPentagram(relativePath)
-{
+function detectPentagram(relativePath) {
     let possiblePentagram = [
-        [[-2, 0] , [-1, 1] , [1, 1] , [2, 0] , [1, -1]],
-        [[-1, 1] , [1, 1] , [2, 0] , [1, -1] , [-1, -1]],
-        [[1, 1] , [2, 0] , [1, -1] , [-1, -1] , [-2, 0]],
-        [[2, 0] , [1, -1] , [-1, -1] , [-2, 0] , [-1, 1]],
-        [[1, -1] , [-1, -1] , [-2, 0] , [-1, 1] , [1, 1]],
-        [[-1, -1] , [-2, 0] , [-1, 1] , [1, 1] , [2, 0]],
-        [[1, 1] , [-1, 1] , [-2, 0] , [-1, -1] , [1, -1]],
-        [[-1, 1] , [-2, 0] , [-1, -1] , [1, -1] , [2, 0]],
-        [[-2, 0] , [-1, -1] , [1, -1] , [2, 0] , [1, 1]],
-        [[-1, -1] , [1, -1] , [2, 0] , [1, 1] , [-1, 1]],
-        [[1, -1] , [2, 0] , [1, 1] , [-1, 1] , [-2, 0]],
-        [[2, 0] , [1, 1] , [-1, 1] , [-2, 0] , [-1, -1]]
+        [[-2, 0], [-1, 1], [1, 1], [2, 0], [1, -1]],
+        [[-1, 1], [1, 1], [2, 0], [1, -1], [-1, -1]],
+        [[1, 1], [2, 0], [1, -1], [-1, -1], [-2, 0]],
+        [[2, 0], [1, -1], [-1, -1], [-2, 0], [-1, 1]],
+        [[1, -1], [-1, -1], [-2, 0], [-1, 1], [1, 1]],
+        [[-1, -1], [-2, 0], [-1, 1], [1, 1], [2, 0]],
+        [[1, 1], [-1, 1], [-2, 0], [-1, -1], [1, -1]],
+        [[-1, 1], [-2, 0], [-1, -1], [1, -1], [2, 0]],
+        [[-2, 0], [-1, -1], [1, -1], [2, 0], [1, 1]],
+        [[-1, -1], [1, -1], [2, 0], [1, 1], [-1, 1]],
+        [[1, -1], [2, 0], [1, 1], [-1, 1], [-2, 0]],
+        [[2, 0], [1, 1], [-1, 1], [-2, 0], [-1, -1]]
     ];
-   for(let i = 0; i < possiblePentagram.length; i++)
-   {
-    if(equalArray(relativePath,possiblePentagram[i]))
-    {
-        return true;
+    for (let i = 0; i < possiblePentagram.length; i++) {
+        if (equalArray(relativePath, possiblePentagram[i])) {
+            return true;
+        }
     }
-   }
 }
 
 //checks path made by player and sees if it follows any lightning patterns
-function detectLightning(relativePath)
-{
+function detectLightning(relativePath) {
     let possibleLightning = [
-        [[-1, 1],[2, 0],[-1, 1]],
-        [[1, 1],[-2, 0],[1, 1]],
-        [[-1, -1],[2, 0],[-1, -1]],
-        [[1, -1],[-2, 0],[1, -1]]
+        [[-1, 1], [2, 0], [-1, 1]],
+        [[1, 1], [-2, 0], [1, 1]],
+        [[-1, -1], [2, 0], [-1, -1]],
+        [[1, -1], [-2, 0], [1, -1]]
     ];
-    for(let i = 0; i < possibleLightning.length; i++)
-   {
-    if(equalArray(relativePath,possibleLightning[i]))
-    {
-       return true;
+    for (let i = 0; i < possibleLightning.length; i++) {
+        if (equalArray(relativePath, possibleLightning[i])) {
+            return true;
+        }
     }
-   }
 }
 
 //checks path made by player and sees if it follows any infinity patterns
-function detectInfinity(relativePath)
-{
+function detectInfinity(relativePath) {
     let possibleInfinity = [
-        [[-2, 0] , [-1, 1] , [1, 1] , [2, 0] , [1, -1] , [1, -1] , [2, 0] , [1, 1] , [-1, 1] , [-2, 0]],
-        [[2, 0] , [1, -1] , [-1, -1] , [-2, 0] , [-1, 1] , [-1, 1] , [-2, 0] , [-1, -1] , [1, -1] , [2, 0]],
-        [[-2, 0] , [-1, -1] , [1, -1] , [2, 0] , [1, 1] , [1, 1] , [2, 0] , [1, -1] , [-1, -1] , [-2, 0]],
-        [[2, 0] , [1, 1] , [-1, 1] , [-2, 0] , [-1, -1] , [-1, -1] , [-2, 0] , [-1, 1] , [1, 1] , [2, 0]]
+        [[-2, 0], [-1, 1], [1, 1], [2, 0], [1, -1], [1, -1], [2, 0], [1, 1], [-1, 1], [-2, 0]],
+        [[2, 0], [1, -1], [-1, -1], [-2, 0], [-1, 1], [-1, 1], [-2, 0], [-1, -1], [1, -1], [2, 0]],
+        [[-2, 0], [-1, -1], [1, -1], [2, 0], [1, 1], [1, 1], [2, 0], [1, -1], [-1, -1], [-2, 0]],
+        [[2, 0], [1, 1], [-1, 1], [-2, 0], [-1, -1], [-1, -1], [-2, 0], [-1, 1], [1, 1], [2, 0]]
     ];
-    for(let i = 0; i < possibleInfinity.length; i++)
-   {
-    if(equalArray(relativePath,possibleInfinity[i]))
-    {
-        return true;
+    for (let i = 0; i < possibleInfinity.length; i++) {
+        if (equalArray(relativePath, possibleInfinity[i])) {
+            return true;
+        }
     }
-   }
 }
 
 //checks path made by player and sees if it follows any W patterns
-function detectW(relativePath)
-{
+function detectW(relativePath) {
     let possibleW = [
-        [[1, 1],[1, -1],[1, 1],[1, -1]],
-        [[-1, 1],[-1, -1],[-1, 1],[-1, -1]]
+        [[1, 1], [1, -1], [1, 1], [1, -1]],
+        [[-1, 1], [-1, -1], [-1, 1], [-1, -1]]
     ];
-    for(let i = 0; i < possibleW.length; i++)
-   {
-    if(equalArray(relativePath,possibleW[i]))
-    {
-        return true;
+    for (let i = 0; i < possibleW.length; i++) {
+        if (equalArray(relativePath, possibleW[i])) {
+            return true;
+        }
     }
-   }
 }
 
 //checks path made by player and sees if it follows any trapezoid patterns
-function detectTrapezoid(relativePath)
-{
+function detectTrapezoid(relativePath) {
     let possibleTrapezoid = [
-        [[-1, 1] , [2, 0] , [2, 0] , [-1, -1]],
-        [[2, 0] , [2, 0] , [-1, -1] , [-2, 0]],
-        [[2, 0] , [-1, -1] , [-2, 0] , [-1, 1]],
-        [[-1, -1] , [-2, 0] , [-1, 1] , [2, 0]],
-        [[-2, 0] , [-1, 1] , [2, 0] , [2, 0]],
-        [[2, 0] , [1, 1] , [-2, 0] , [-2, 0]],
-        [[1, 1] , [-2, 0] , [-2, 0] , [1, -1]],
-        [[-2, 0] , [1, -1] , [2, 0] , [1, 1]],
-        [[1, -1] , [2, 0] , [1, 1] , [-2, 0]],
-        [[-1, -1] , [2, 0] , [2, 0] , [-1, 1]],
-        [[2, 0] , [2, 0] , [-1, 1] , [-2, 0]],
-        [[2, 0] , [-1, 1] , [-2, 0] , [-1, -1]],
-        [[-1, 1] , [-2, 0] , [-1, -1] , [2, 0]],
-        [[-2, 0] , [-1, -1] , [2, 0] , [2, 0]],
-        [[2, 0] , [1, -1] , [-2, 0] , [-2, 0]],
-        [[1, -1] , [-2, 0] , [-2, 0] , [1, 1]],
-        [[-2, 0] , [-2, 0] , [1, 1] , [2, 0]],
-        [[-2, 0] , [1, 1] , [2, 0] , [1, -1]],
-        [[1, 1] , [2, 0] , [1, -1] , [-2, 0]]
+        [[-1, 1], [2, 0], [2, 0], [-1, -1]],
+        [[2, 0], [2, 0], [-1, -1], [-2, 0]],
+        [[2, 0], [-1, -1], [-2, 0], [-1, 1]],
+        [[-1, -1], [-2, 0], [-1, 1], [2, 0]],
+        [[-2, 0], [-1, 1], [2, 0], [2, 0]],
+        [[2, 0], [1, 1], [-2, 0], [-2, 0]],
+        [[1, 1], [-2, 0], [-2, 0], [1, -1]],
+        [[-2, 0], [1, -1], [2, 0], [1, 1]],
+        [[1, -1], [2, 0], [1, 1], [-2, 0]],
+        [[-1, -1], [2, 0], [2, 0], [-1, 1]],
+        [[2, 0], [2, 0], [-1, 1], [-2, 0]],
+        [[2, 0], [-1, 1], [-2, 0], [-1, -1]],
+        [[-1, 1], [-2, 0], [-1, -1], [2, 0]],
+        [[-2, 0], [-1, -1], [2, 0], [2, 0]],
+        [[2, 0], [1, -1], [-2, 0], [-2, 0]],
+        [[1, -1], [-2, 0], [-2, 0], [1, 1]],
+        [[-2, 0], [-2, 0], [1, 1], [2, 0]],
+        [[-2, 0], [1, 1], [2, 0], [1, -1]],
+        [[1, 1], [2, 0], [1, -1], [-2, 0]]
     ];
-    for(let i = 0; i < possibleTrapezoid.length; i++)
-   {
-    if(equalArray(relativePath,possibleTrapezoid[i]))
-    {
-        return true;
+    for (let i = 0; i < possibleTrapezoid.length; i++) {
+        if (equalArray(relativePath, possibleTrapezoid[i])) {
+            return true;
+        }
     }
-   }
 }
 
 //funciton that cheks to see if two 2D array's are equal to each other

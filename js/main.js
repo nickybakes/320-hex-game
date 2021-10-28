@@ -98,10 +98,12 @@ let rotationCoolDownMax = .2;
 
 // timer variables
 const whiteText = new PIXI.TextStyle({
-    fill: "white"
+    fill: "white",
+    fontFamily: "PT Serif"
 });
 const redText = new PIXI.TextStyle({
-    fill: "#d10023"
+    fill: "#d10023",
+    fontFamily: "PT Serif"
 });
 let startTimeInSec = 30;
 let pausedTime = startTimeInSec;
@@ -112,7 +114,6 @@ let countDown = false;
 let timeTracker = new PIXI.Text('timer', whiteText);
 timeTracker.x = 800;
 timeTracker.y = 105;
-timeTracker.style.fontFamily = "PT Serif";
 
 let score = 0;
 let scoreString = 'score: ';
@@ -403,7 +404,7 @@ function setUpTitle() {
 }
 
 //Plays a little rainbow effect when the Play button is clicked on the title screen
-function playButtonClick(){
+function playButtonClick() {
     buttonSound.play();
 
     for (let i = 0; i < 6; i++) {
@@ -598,10 +599,10 @@ function setUpGame() {
     gameScene.addChild(timeTracker);
     gameScene.addChild(scoreTracker);
 
-    gameControlTextValues = [createText('3', 325, 275, countdownStyle), 
-    createText('2', 325, 275, countdownStyle), 
-    createText('1', 325, 275, countdownStyle), 
-    createText('MATCH!', 125, 275, countdownStyle), 
+    gameControlTextValues = [createText('3', 325, 275, countdownStyle),
+    createText('2', 325, 275, countdownStyle),
+    createText('1', 325, 275, countdownStyle),
+    createText('MATCH!', 125, 275, countdownStyle),
     createText('TIME!', 200, 275, countdownStyle)];
 
     for (let textItem of gameControlTextValues) {
@@ -721,12 +722,15 @@ function setGameState(state) {
     //2 - game
     //3 - pause
     //4 - endgame
-    
+
     // Handle anything that needs to run while transitioning between states
     switch (state) {
         case gameState:
             isGameOver = false;
             if (currentState != pauseState) {
+                setHexInteractive(false);
+                hexFallAnimationTime = -1;
+                hexBreakAnimationTime = -1;
                 for (let textItem of gameControlTextValues) {
                     textItem.visible = false;
                 }
@@ -734,8 +738,8 @@ function setGameState(state) {
                 for (let i = 0; i < challengeShapes.length; i++) {
                     challengeSprites[i].visible = false;
                 }
-                pickChallenge2();
                 pickChallenge1();
+                pickChallenge2();
                 currentTimeInSec = startTimeInSec;
                 score = 0;
                 scoreTracker.text = 'score: ' + score;
@@ -752,9 +756,11 @@ function setGameState(state) {
             gameStarted = true;
             break;
         case pauseState:
+            backgroundRefractionGraphic.alpha = .07;
             pausedTime = currentTimeInSec;
             break;
         case modeState:
+            backgroundRefractionGraphic.alpha = .07;
             isInCountdown = false;
             currentTimeInSec = startTimeInSec;
             pausedTime = currentTimeInSec;
@@ -771,7 +777,7 @@ function setGameState(state) {
             backgroundRefractionGraphic.alpha = 0;
             break;
         case endGameState:
-            
+
             break;
         default:
             isInCountdown = false;
@@ -809,7 +815,7 @@ function passChildren(targetState) {
     }
 }
 
-function pickChallenge1(){
+function pickChallenge1() {
     let previousChallenge = challengeIndex1;
     challengeSprites[challengeIndex1].visible = false;
     challengeIndex1 = Math.trunc(Math.random() * challengeShapes.length);
@@ -829,10 +835,10 @@ function pickChallenge1(){
 
 function pickChallenge2() {
     let previousChallenge = challengeIndex2;
-    challengeSprites[challengeIndex1].visible = false;
+    challengeSprites[challengeIndex2].visible = false;
     challengeIndex2 = Math.trunc(Math.random() * challengeShapes.length);
     //keep randomizing to make sure we dont get 2 of the same challenge
-    while (challengeIndex2 == challengeIndex1 || previousChallenge == challengeIndex2){
+    while (challengeIndex2 == challengeIndex1 || previousChallenge == challengeIndex2) {
         challengeIndex2 = Math.trunc(Math.random() * challengeShapes.length);
     }
     challengeComplete2 = false;
@@ -845,24 +851,35 @@ function pickChallenge2() {
     challengeReward2.text = challengeRewards[challengeIndex2];
 }
 
-function completeChallenge1(){
+function completeChallenge1() {
     //reward points
-    score += challengeRewards[challengeIndex1];
+    setScore(score + challengeRewards[challengeIndex1]);
 
-    let particle = new HexBreakParticleSystem(792, 425, 6, 7, 8);
-    hexBreakParticles.push(particle);
-    app.stage.addChild(particle);
+
+    for (let i = 0; i < 3; i++) {
+        let particle = new HexBreakParticleSystem(792, 390 + 35 * i, 6, 7, 8);
+        hexBreakParticles.push(particle);
+        app.stage.addChild(particle);
+    }
+
 
     pickChallenge1();
 }
 
+function setScore(newScore) {
+    score = newScore;
+    scoreTracker.text = "score: " + score;
+}
+
 function completeChallenge2() {
     //reward points
-    score += challengeRewards[challengeIndex2];
+    setScore(score + challengeRewards[challengeIndex2]);
 
-    let particle = new HexBreakParticleSystem(931, 425, 6, 7, 8);
-    hexBreakParticles.push(particle);
-    app.stage.addChild(particle);
+    for (let i = 0; i < 3; i++) {
+        let particle = new HexBreakParticleSystem(931, 390 + 35 * i, 6, 7, 8);
+        hexBreakParticles.push(particle);
+        app.stage.addChild(particle);
+    }
 
     pickChallenge2();
 }
@@ -887,7 +904,7 @@ function createStateButton(text, x, y, targetState, style = buttonStyleLarge) {
     button.interactive = true;
     button.buttonMode = true;
     //when the user clicks down, set our selected button to this one
-     button.on('pointerdown', function (e) { buttonSound.play(); });
+    button.on('pointerdown', function (e) { buttonSound.play(); });
     //when the user releases the click; if this is the same button their clicked down on, then call its function!
     button.on('pointerup', function (e) { setGameState(targetState); });
     //if the user hovers over the button, change alpha
@@ -918,6 +935,13 @@ function createSprite(url, anchorX, anchorY, posX, posY) {
     return img;
 }
 
+function setHexInteractive(interactive) {
+    for (let i = 0; i < hexArray.length; i++) {
+        hexArray[i].ineractive = interactive;
+        hexArray[i].buttonMode = interactive;
+    }
+}
+
 
 //this gets called every frame, updates and renders our 3D graphics
 function updateLoop() {
@@ -943,11 +967,10 @@ function updateLoop() {
             } else {
                 textValueIndex = 0;
                 isInCountdown = false;
+                setHexInteractive(true);
             }
-            
-        }
-    } else {
 
+        }
     }
 
     // for (let i = 0; i < hexRefractionMasks.length; i++) {
@@ -1123,6 +1146,7 @@ function updateLoop() {
             hexFallAnimationTime = hexFallAnimationTimeMax;
         }
         else {
+            setHexInteractive(true);
             hexFallAnimationTime = -1;
             for (let i = 0; i < hexGridWidth / 2; i++) {
                 columnWaitAmount[i] = 0;
@@ -1133,14 +1157,14 @@ function updateLoop() {
     }
 
     // change to only decrease on first click
-    if (gameStarted && currentMode != endlessMode && !isInCountdown) {
+    if (currentState == gameState && gameStarted && currentMode != endlessMode && !isInCountdown && hexFallAnimationTime == -1 && hexFallAnimationTime == -1) {
         prevTime = currentTimeInSec;
         currentTimeInSec -= dt;
 
-        if(Math.ceil(currentTimeInSec) < Math.ceil(prevTime)){
+        if (Math.ceil(currentTimeInSec) < Math.ceil(prevTime)) {
             timerSound.play();
 
-            if(currentTimeInSec <= 10){
+            if (currentTimeInSec <= 10) {
                 flashText();
             }
         }
@@ -1156,9 +1180,7 @@ function updateLoop() {
     }
 
     //controlling time text HUD
-    currentMode != endlessMode ? timeTracker.text = secondsToTimeString(currentTimeInSec) : timeTracker.text = ``;
-
-    timeTracker.text = secondsToTimeString(currentTimeInSec);
+    currentMode != endlessMode ? timeTracker.text = secondsToTimeString(currentTimeInSec) : timeTracker.text = "Endless";
 
     //reset our controls for next frame
     keysReleased = [];
@@ -1228,6 +1250,12 @@ function onDragEnd(e) {
     //console.log("Drag End (for whole window)");
     let completePath = compareHexes(hexPath);
     if (completePath && currentState == gameState && !isInCountdown) {
+        if (challengeComplete1) {
+            completeChallenge1();
+        }
+        if (challengeComplete2) {
+            completeChallenge2();
+        }
         //detectShape(hexPath);
         //start the hex breaking animation
         hexBreakAnimationTime = hexBreakAnimationTimeMax;
@@ -1243,6 +1271,9 @@ function onDragEnd(e) {
 
         hexBreakAnimationTimePerHex = 0;
         hexBreakAnimationTime += .1;
+
+        setHexInteractive(false);
+
 
         pathIndicator.clear();
         pathIndicator2.clear();
@@ -1378,21 +1409,20 @@ function createBg(texture, scene) {
 }
 
 // flash timer text
-function flashText(){
-    if(timeTracker.style == whiteText){
+function flashText() {
+    if (timeTracker.style == whiteText) {
         timeTracker.style = redText;
     }
-    else{
+    else {
         timeTracker.style = whiteText;
     }
 }
 
-function addScoreAnimation(posX, posY){
-    console.log("AA");
+function addScoreAnimation(posX, posY) {
     plusScore.x = posX;
     plusScore.y = posY;
     gameScene.addChild(plusScore);
-    for(let i = 10; i > 0; i--){
+    for (let i = 10; i > 0; i--) {
         plusScore.y -= i;
     }
 }

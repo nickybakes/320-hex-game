@@ -446,7 +446,6 @@ class Hexagon extends PIXI.Graphics {
             return;
 
         if (this == highlightedHex && dragStartHex == null) {
-            console.log("DRAG START");
             dragStartHex = this;
             hexPath.push(this);
             mouseHeldDown = true;
