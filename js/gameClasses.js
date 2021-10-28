@@ -780,3 +780,77 @@ class HexBreakParticleSystem extends PIXI.Graphics {
         }
     }
 }
+
+class ScoreIndicator extends PIXI.Text {
+
+    currentLifeTime;
+
+    currentLifeTimeMax;
+
+    startFadingTime;
+
+    constructor(x, y, amount, style, currentLifeTimeMax1 = .7, fadeTime = .3) {
+        super(" ", style);
+        this.x = x;
+        this.y = y;
+        this.anchor.set(.5, .5);
+        this.text = amount;
+        this.currentLifeTimeMax = currentLifeTimeMax1;
+        this.startFadingTime = fadeTime;
+        this.currentLifeTime = this.currentLifeTimeMax;
+    }
+
+    update(){
+        this.y -= 60 * frameTime;
+        this.currentLifeTime -= frameTime;
+        if (this.currentLifeTime < this.startFadingTime && this.currentLifeTime > 0){
+            this.alpha = this.currentLifeTime / this.startFadingTime;
+        }
+        else if (this.currentLifeTimeMax <= 0){
+            this.alpha = 0;
+        }
+    }
+
+}
+
+class TimeAddIndicator extends PIXI.Text {
+
+    currentAnimationTime;
+
+    currentAnimationTimeMax;
+
+    startingY;
+
+    amountOfTime;
+
+    fadingAnimationPlaying = false;
+
+    constructor(x, y, style, currentLifeTimeMax1 = .7) {
+        super(" ", style);
+        this.x = x;
+        this.y = y;
+        this.startingY = y;
+        this.anchor.set(.5, .5);
+        this.currentAnimationTimeMax = currentLifeTimeMax1;
+        this.currentAnimationTime = this.currentAnimationTimeMax;
+    }
+
+    setAmount(newAmount) {
+        this.amountOfTime = newAmount;
+        this.text = "+" + secondsToTimeStringShortened(this.amountOfTime);
+    }
+
+    addToAmount(amountToAdd){
+        this.amountOfTime += amountToAdd;
+        this.text = "+" + secondsToTimeStringShortened(this.amountOfTime);
+    }
+
+    update() {
+        if(this.fadingAnimationPlaying){
+            this.currentAnimationTime -= frameTime;
+            this.y = lerp(this.startingY, 119, (this.currentAnimationTimeMax - this.currentAnimationTime) / this.currentAnimationTimeMax);
+            this.alpha = this.currentAnimationTime / this.currentAnimationTimeMax;
+        }
+    }
+
+}

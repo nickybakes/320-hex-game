@@ -73,6 +73,30 @@ function secondsToTimeString(seconds) {
     return timeString;
 }
 
+function secondsToTimeStringNoMilliSeconds(seconds) {
+    //clamp to 99 minutes and 59 seconds
+    seconds = clamp(seconds, 0, 5549.999);
+    //use javascript date to parse our seconds value as time
+    let date = new Date(null);
+    date.setSeconds(seconds, (seconds - parseInt(seconds)) * 1000);
+    //limit it to just the minutes, seconds, and milliseconds
+    let timeString = date.toISOString().substr(14, 5);
+    //return the result
+    return timeString;
+}
+
+function secondsToTimeStringShortened(seconds) {
+    //clamp to 99 minutes and 59 seconds
+    seconds = clamp(seconds, 0, 5549.999);
+    //use javascript date to parse our seconds value as time
+    let date = new Date(null);
+    date.setSeconds(seconds, (seconds - parseInt(seconds)) * 1000);
+    //limit it to just the minutes, seconds, and milliseconds
+    let timeString = date.toISOString().substr(15, 7);
+    //return the result
+    return timeString;
+}
+
 function rgbToHex(red = 0, green = 0, blue = 0) {
     let redHex = Number(Math.trunc(clamp(red, 0, 255))).toString(16);
     if (redHex.length < 2) {
