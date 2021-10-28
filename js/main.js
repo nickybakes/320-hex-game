@@ -116,8 +116,7 @@ timeTracker.x = 800;
 timeTracker.y = 105;
 
 let score = 0;
-let scoreString = 'score: ';
-let scoreTracker = new PIXI.Text('score: ' + score, whiteText);
+let scoreTracker = new PIXI.Text(score, whiteText);
 scoreTracker.x = 810;
 scoreTracker.y = 205;
 scoreTracker.style.fontFamily = "PT Serif";
@@ -213,7 +212,8 @@ const buttonStyleLarge = new PIXI.TextStyle({
     dropShadow: true,
     dropShadowAlpha: 1,
     dropShadowBlur: 5,
-    dropShadowDistance: 1
+    dropShadowDistance: 1,
+    fontWeight: "bold",
 });
 const finalScoreStyle = new PIXI.TextStyle({
     fill: 0xc7c7c7,
@@ -231,7 +231,8 @@ const buttonStyleMedium = new PIXI.TextStyle({
     dropShadow: true,
     dropShadowAlpha: 1,
     dropShadowBlur: 5,
-    dropShadowDistance: 1
+    dropShadowDistance: 1,
+    fontWeight: "bold",
 });
 const textStyle = new PIXI.TextStyle({
     fill: 0xffd900,
@@ -273,7 +274,8 @@ const countdownStyle = new PIXI.TextStyle({
     dropShadow: true,
     dropShadowAlpha: 1,
     dropShadowBlur: 5,
-    dropShadowDistance: 1
+    dropShadowDistance: 1,
+    fontWeight: 'bolder'
 });
 
 let howToPlayTextPopup1;
@@ -368,7 +370,9 @@ function setUpTitle() {
         dropShadow: true,
         dropShadowAlpha: 1,
         dropShadowBlur: 5,
-        dropShadowDistance: 1
+        dropShadowDistance: 1,
+        fontWeight: "bolder",
+        letterSpacing: 10
     });
 
     // This stuff has hardcoded locations, which I need to fix later
@@ -387,7 +391,7 @@ function setUpTitle() {
     titleScene.addChild(logo);
 
     // Creating the buttons
-    let playButton = createStateButton("PLAY", 300, 330, howToPlayState, playButtonStyle);
+    let playButton = createStateButton("PLAY", 374, 330, howToPlayState, playButtonStyle, .5);
     playButton.on('pointerup', function (e) { setGameState(howToPlayState); playButtonClick(); });
     titleScene.addChild(playButton);
     // let howToPlayButton = createStateButton("How To Play", 75, 240, 1, buttonStyle);
@@ -599,11 +603,11 @@ function setUpGame() {
     gameScene.addChild(timeTracker);
     gameScene.addChild(scoreTracker);
 
-    gameControlTextValues = [createText('3', 325, 275, countdownStyle),
-    createText('2', 325, 275, countdownStyle),
-    createText('1', 325, 275, countdownStyle),
-    createText('MATCH!', 125, 275, countdownStyle),
-    createText('TIME!', 200, 275, countdownStyle)];
+    gameControlTextValues = [createText('3', 374, 275, countdownStyle, .5),
+        createText('2', 374, 275, countdownStyle, .5),
+        createText('1', 374, 275, countdownStyle, .5),
+        createText('MATCH!', 374, 275, countdownStyle, .5),
+        createText('TIME!', 374, 275, countdownStyle, .5)];
 
     for (let textItem of gameControlTextValues) {
         gameScene.addChild(textItem);
@@ -742,7 +746,7 @@ function setGameState(state) {
                 pickChallenge2();
                 currentTimeInSec = startTimeInSec;
                 score = 0;
-                scoreTracker.text = 'score: ' + score;
+                scoreTracker.text = score;
                 countdownTimer = countdownTimeMax;
                 textValueIndex = 0;
                 isInCountdown = true;
@@ -868,7 +872,7 @@ function completeChallenge1() {
 
 function setScore(newScore) {
     score = newScore;
-    scoreTracker.text = "score: " + score;
+    scoreTracker.text = score;
 }
 
 function completeChallenge2() {
@@ -893,13 +897,13 @@ function recolorHexGrid() {
 
 // Creates and returns a button that calls setGameState
 // I have no idea why, but passing in a callback function refused to work and I am very upsetti about it :(
-function createStateButton(text, x, y, targetState, style = buttonStyleLarge) {
+function createStateButton(text, x, y, targetState, style = buttonStyleLarge, anchorX = 0, anchorY = .5) {
     //store the text and position values
     let button = new PIXI.Text(text);
     button.style = style;
     button.x = x;
     button.y = y;
-    button.anchor.set(0, .5);
+    button.anchor.set(anchorX, anchorY);
     //make it interactive
     button.interactive = true;
     button.buttonMode = true;
@@ -914,13 +918,13 @@ function createStateButton(text, x, y, targetState, style = buttonStyleLarge) {
     return button;
 }
 
-function createText(text, x, y, style) {
+function createText(text, x, y, style, anchorX = 0, anchorY = .5) {
     //store the text and position values
     let textItem = new PIXI.Text(text);
     textItem.style = style;
     textItem.x = x;
     textItem.y = y;
-    textItem.anchor.set(0, .5);
+    textItem.anchor.set(anchorX, anchorY);
     return textItem;
 }
 
@@ -1211,7 +1215,7 @@ function breakHex(hex) {
     //update score and timer
     score++;
     plusScore.text = "+1";
-    scoreTracker.text = scoreString + score;
+    scoreTracker.text = score;
 
     currentTimeInSec++;
 
