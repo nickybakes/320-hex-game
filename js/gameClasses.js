@@ -446,7 +446,6 @@ class Hexagon extends PIXI.Graphics {
             return;
 
         if (this == highlightedHex && dragStartHex == null) {
-            console.log("DRAG START");
             dragStartHex = this;
             hexPath.push(this);
             mouseHeldDown = true;
@@ -699,7 +698,7 @@ class WrongMoveIndicator extends PIXI.Graphics {
 //looks like it visually exploded
 class HexBreakParticleSystem extends PIXI.Graphics {
 
-    colorsRGB = [{ r: 255, g: 0, b: 0 }, { r: 245, g: 139, b: 0 }, { r: 255, g: 208, b: 0 }, { r: 0, g: 145, b: 0 }, { r: 0, g: 110, b: 255 }, { r: 116, g: 0, b: 184 }];
+    colorsRGB = [{ r: 255, g: 0, b: 0 }, { r: 245, g: 139, b: 0 }, { r: 255, g: 208, b: 0 }, { r: 0, g: 145, b: 0 }, { r: 0, g: 110, b: 255 }, { r: 116, g: 0, b: 184 }, { r: 168, g: 168, b: 168 }, { r: 255, g: 244, b: 122 }, { r: 255, g: 0, b: 128 }];
 
     brokenPieces = [];
 
@@ -780,4 +779,78 @@ class HexBreakParticleSystem extends PIXI.Graphics {
             this.endFill();
         }
     }
+}
+
+class ScoreIndicator extends PIXI.Text {
+
+    currentLifeTime;
+
+    currentLifeTimeMax;
+
+    startFadingTime;
+
+    constructor(x, y, amount, style, currentLifeTimeMax1 = .7, fadeTime = .3) {
+        super(" ", style);
+        this.x = x;
+        this.y = y;
+        this.anchor.set(.5, .5);
+        this.text = amount;
+        this.currentLifeTimeMax = currentLifeTimeMax1;
+        this.startFadingTime = fadeTime;
+        this.currentLifeTime = this.currentLifeTimeMax;
+    }
+
+    update(){
+        this.y -= 60 * frameTime;
+        this.currentLifeTime -= frameTime;
+        if (this.currentLifeTime < this.startFadingTime && this.currentLifeTime > 0){
+            this.alpha = this.currentLifeTime / this.startFadingTime;
+        }
+        else if (this.currentLifeTimeMax <= 0){
+            this.alpha = 0;
+        }
+    }
+
+}
+
+class TimeAddIndicator extends PIXI.Text {
+
+    currentAnimationTime;
+
+    currentAnimationTimeMax;
+
+    startingY;
+
+    amountOfTime;
+
+    fadingAnimationPlaying = false;
+
+    constructor(x, y, style, currentLifeTimeMax1 = .7) {
+        super(" ", style);
+        this.x = x;
+        this.y = y;
+        this.startingY = y;
+        this.anchor.set(.5, .5);
+        this.currentAnimationTimeMax = currentLifeTimeMax1;
+        this.currentAnimationTime = this.currentAnimationTimeMax;
+    }
+
+    setAmount(newAmount) {
+        this.amountOfTime = newAmount;
+        this.text = "+" + secondsToTimeStringShortened(this.amountOfTime);
+    }
+
+    addToAmount(amountToAdd){
+        this.amountOfTime += amountToAdd;
+        this.text = "+" + secondsToTimeStringShortened(this.amountOfTime);
+    }
+
+    update() {
+        if(this.fadingAnimationPlaying){
+            this.currentAnimationTime -= frameTime;
+            this.y = lerp(this.startingY, 119, (this.currentAnimationTimeMax - this.currentAnimationTime) / this.currentAnimationTimeMax);
+            this.alpha = this.currentAnimationTime / this.currentAnimationTimeMax;
+        }
+    }
+
 }

@@ -4,7 +4,6 @@ const app = new PIXI.Application({
     height: 576,
     antialias: true,
     autoDensity: true, // !!!
-    resolution: 2,
 });
 document.body.appendChild(app.view);
 
@@ -98,13 +97,24 @@ let rotationCoolDownMax = .2;
 
 // timer variables
 const whiteText = new PIXI.TextStyle({
-    fill: "white"
+    fill: "white",
+    fontFamily: "PT Serif",
+    fontSize: 30,
+    stroke: 0x00000,
+    strokeThickness: 8,
+    fontWeight: 'bolder',
+    letterSpacing: 4
 });
 const redText = new PIXI.TextStyle({
-    fill: "#d10023"
+    fill: "#d10023",
+    fontFamily: "PT Serif",
+    fontSize: 30,
+    stroke: 0x00000,
+    strokeThickness: 8,
+    fontWeight: 'bolder',
+    letterSpacing: 4
 });
 let startTimeInSec = 30;
-let pausedTime = startTimeInSec;
 let currentTimeInSec = startTimeInSec;
 let prevTime = currentTimeInSec;
 let startCountdown = false;
@@ -112,16 +122,14 @@ let countDown = false;
 let timeTracker = new PIXI.Text('timer', whiteText);
 timeTracker.x = 800;
 timeTracker.y = 105;
-timeTracker.style.fontFamily = "PT Serif";
 
 let score = 0;
-let scoreString = 'score: ';
-let scoreTracker = new PIXI.Text('score: ' + score, whiteText);
-scoreTracker.x = 810;
-scoreTracker.y = 205;
+let scoreTracker = new PIXI.Text(score, whiteText);
+scoreTracker.anchor.x = .5;
+scoreTracker.x = 862;
+scoreTracker.y = 207;
 scoreTracker.style.fontFamily = "PT Serif";
-let plusScore = new PIXI.Text('+ 1', whiteText);
-let comboPoints = 0;
+let comboCount = 0;
 let gameStarted;
 
 //time during falling animation of hexes falling 1 row,
@@ -135,6 +143,9 @@ let hexBreakAnimationTimePerHex;
 let hexBreakAnimationTimeMaxPerHex;
 
 let hexBreakParticles = [];
+let scoreIndicators = [];
+let timeAddIndicator;
+let timeToAdd;
 
 let wrongMoveIndicator;
 let wrongMovePositionAndDirection;
@@ -159,24 +170,24 @@ let backgroundOverlaySprite;
 let backgroundOverlayGraphic;
 
 let challengeNames = ["Triad", "Exert", "Riches", "Smite", "Valorous"];
-let challengeShapes = ["traingle", "rhombus", "diamond", "lightning", "W"];
-let challengeReward = [500, 800, 1000, 1000, 1200];
+let challengeShapes = ["Triangle", "Rhombus", "Diamond", "Lightning", "W"];
+let challengeRewards = [60, 350, 250, 410, 520];
 let challengeSprites = [];
 let challengeCheckerFunctions = [checkForTriangle, checkForRhombus, checkForDiamond, checkForLightning, checkForW];
 let challengeIndex1 = 3;
 let challengeIndex2 = 4;
 
+let challengeTitle1;
+let challengeTitle2;
+let challengeDescription1;
+let challengeDescription2;
+let challengeReward1;
+let challengeReward2;
+
 //this is ONLY true if the callenge is correct in the pathing and the path is valid.
 let challengeComplete1;
 //this is ONLY true if the callenge is correct in the pathing and the path is valid.
 let challengeComplete2;
-
-//this is true if the callenge is correct in the pathing.
-let challengeCompleteInPath1;
-//this is true if the callenge is correct in the pathing.
-let challengeCompleteInPath2;
-
-
 
 // let hexRefractionSprite;
 // let hexRefractionGraphic;
@@ -205,7 +216,10 @@ const buttonStyleLarge = new PIXI.TextStyle({
     dropShadow: true,
     dropShadowAlpha: 1,
     dropShadowBlur: 5,
-    dropShadowDistance: 1
+    dropShadowDistance: 1,
+    fontWeight: "bold",
+    stroke: 0x00000,
+    strokeThickness: 8,
 });
 const finalScoreStyle = new PIXI.TextStyle({
     fill: 0xc7c7c7,
@@ -223,14 +237,18 @@ const buttonStyleMedium = new PIXI.TextStyle({
     dropShadow: true,
     dropShadowAlpha: 1,
     dropShadowBlur: 5,
-    dropShadowDistance: 1
+    dropShadowDistance: 1,
+    fontWeight: "bold",
+    stroke: 0x00000,
+    strokeThickness: 8,
 });
 const textStyle = new PIXI.TextStyle({
     fill: 0xffd900,
     fontSize: 21,
     fontFamily: 'PT Serif',
     wordWrapWidth: 492,
-    wordWrap: true
+    wordWrap: true,
+    padding: 10
 });
 const textStyle2 = new PIXI.TextStyle({
     fill: 0xffffff,
@@ -242,7 +260,7 @@ const textStyle2 = new PIXI.TextStyle({
 
 const textStyle3 = new PIXI.TextStyle({
     fill: 0xc7c7c7,
-    fontSize: 26,
+    fontSize: 24,
     fontFamily: 'PT Serif',
     fontStyle: 'italic',
     padding: 10
@@ -252,17 +270,54 @@ const textStyle4 = new PIXI.TextStyle({
     fill: 0xffd900,
     fontSize: 18,
     fontFamily: 'PT Serif',
+    wordWrapWidth: 112,
+    wordWrap: true,
+    padding: 5
 });
 const countdownStyle = new PIXI.TextStyle({
-    fill: 0xffeb0b,
+    fill: 0xffde85,
     fontSize: 150,
     fontFamily: "PT Serif",
     stroke: true,
-    strokeThickness: 3,
     dropShadow: true,
     dropShadowAlpha: 1,
     dropShadowBlur: 5,
-    dropShadowDistance: 1
+    dropShadowDistance: 1,
+    fontWeight: 'bolder',
+    stroke: 0x00000,
+    strokeThickness: 8
+});
+
+const scoreIndicatorStyle = new PIXI.TextStyle({
+    fill: 0xffde85,
+    fontSize: 45,
+    fontFamily: "PT Serif",
+    stroke: true,
+    dropShadow: true,
+    dropShadowAlpha: 1,
+    dropShadowBlur: 5,
+    dropShadowDistance: 1,
+    fontWeight: 'bolder',
+    stroke: 0x00000,
+    strokeThickness: 8,
+    fontStyle: 'italic',
+    padding: 15
+});
+
+const challengeCompleteIndicatorStyle = new PIXI.TextStyle({
+    fill: 0xffde85,
+    fontSize: 65,
+    fontStyle: 'italic',
+    fontFamily: "PT Serif",
+    stroke: true,
+    dropShadow: true,
+    dropShadowAlpha: 1,
+    dropShadowBlur: 5,
+    dropShadowDistance: 1,
+    fontWeight: 'bolder',
+    stroke: 0x00000,
+    strokeThickness: 8,
+    padding: 15
 });
 
 let howToPlayTextPopup1;
@@ -298,13 +353,13 @@ function setupScenes() {
 
     backgroundRefractionSprite = PIXI.Texture.from('media/background-refraction-pattern.jpg');
     backgroundRefractionGraphic = new PIXI.TilingSprite(backgroundRefractionSprite, 1024, 576);
-    backgroundRefractionGraphic.alpha = .07;
+    backgroundRefractionGraphic.alpha = .1;
 
     backgroundRefractionGraphic2 = new PIXI.TilingSprite(backgroundRefractionSprite, 1024, 576);
-    backgroundRefractionGraphic2.alpha = .07;
+    backgroundRefractionGraphic2.alpha = .08;
 
     backgroundRefractionGraphic3 = new PIXI.TilingSprite(backgroundRefractionSprite, 1024, 576);
-    backgroundRefractionGraphic3.alpha = .07;
+    backgroundRefractionGraphic3.alpha = .08;
 
     app.stage.addChild(backgroundRefractionGraphic);
 
@@ -357,7 +412,11 @@ function setUpTitle() {
         dropShadow: true,
         dropShadowAlpha: 1,
         dropShadowBlur: 5,
-        dropShadowDistance: 1
+        dropShadowDistance: 1,
+        fontWeight: "bolder",
+        letterSpacing: 10,
+        stroke: 0x00000,
+        strokeThickness: 8,
     });
 
     // This stuff has hardcoded locations, which I need to fix later
@@ -376,7 +435,7 @@ function setUpTitle() {
     titleScene.addChild(logo);
 
     // Creating the buttons
-    let playButton = createStateButton("PLAY", 300, 330, howToPlayState, playButtonStyle);
+    let playButton = createStateButton("PLAY", 374, 330, howToPlayState, playButtonStyle, .5);
     playButton.on('pointerup', function (e) { setGameState(howToPlayState); playButtonClick(); });
     titleScene.addChild(playButton);
     // let howToPlayButton = createStateButton("How To Play", 75, 240, 1, buttonStyle);
@@ -393,7 +452,7 @@ function setUpTitle() {
 }
 
 //Plays a little rainbow effect when the Play button is clicked on the title screen
-function playButtonClick(){
+function playButtonClick() {
     buttonSound.play();
 
     for (let i = 0; i < 6; i++) {
@@ -416,13 +475,13 @@ function setupHowToPlay() {
     logo.height = 80;
     howToPlayScene.addChild(logo);
 
-    let demoHex1 = new Hexagon(getScreenSpaceX(3), getScreenSpaceY(3), 3, 3, hexRadius, 1, null, null);
+    let demoHex1 = new Hexagon(274, getScreenSpaceY(3), 3.5, 3, hexRadius, 1, null, null);
     demoHex1.setColorsAndRotation(3, 1, 2, 0);
     demoHexArray.push(demoHex1);
-    let demoHex2 = new Hexagon(getScreenSpaceX(5), getScreenSpaceY(3), 5, 3, hexRadius, 3, null, null);
+    let demoHex2 = new Hexagon(374, getScreenSpaceY(3), 5.5, 3, hexRadius, 3, null, null);
     demoHex2.setColorsAndRotation(2, 4, 1, 0);
     demoHexArray.push(demoHex2);
-    let demoHex3 = new Hexagon(getScreenSpaceX(7), getScreenSpaceY(3), 7, 3, hexRadius, 2, null, null);
+    let demoHex3 = new Hexagon(474, getScreenSpaceY(3), 7.5, 3, hexRadius, 2, null, null);
     demoHex3.setColorsAndRotation(3, 2, 4, 0);
     demoHexArray.push(demoHex3);
     howToPlayScene.addChild(demoHex1);
@@ -435,11 +494,11 @@ function setupHowToPlay() {
     // Adding a stage background
     howToPlayScene.addChild(createSprite('media/background-panel-menu.png', 0.5, 0.5, 512, 288));
 
-    howToPlayScene.addChild(createText("You are a wizard building a spell from multiple magical elements. Combine them by drawing lines between sections that share a color or icon. You can rotate hexes with Q and E, and match multiple colors in one path!", 129, 200, textStyle));
+    howToPlayScene.addChild(createText("You are a wizard building a spell from multiple magical elements. Combine them by drawing lines between sections that share a color or icon. You can rotate hexes with Q and E, and match multiple colors in one path!", 134, 212, textStyle));
     //"Try to get ALL THREE in one go!";
     //The colors only need to match between 2 adjacent segments.
-    howToPlayTextPopup1 = createText("Try to get ALL THREE in one go!", 190, 410, textStyle2);
-    howToPlayTextPopup2 = createText("Remember: the colors only need to match between adjacent segments.", 129, 450, textStyle2);
+    howToPlayTextPopup1 = createText("Try to get ALL THREE in one go!", 374, 410, textStyle2, .5);
+    howToPlayTextPopup2 = createText("Remember: the colors only need to match between adjacent segments.", 374, 450, textStyle2, .5);
     howToPlayTextPopup1.alpha = 0;
     howToPlayTextPopup2.alpha = 0;
     howToPlayScene.addChild(howToPlayTextPopup1);
@@ -473,33 +532,61 @@ function setUpMode() {
     modeScene.addChild(logo);
 
     // Creating the buttons
-    let playTimedButton = createStateButton("TIMED", 140, 200, gameState, buttonStyleLarge);
+    let playTimedButton = createStateButton("TIMED", 232, 200, gameState, buttonStyleLarge, .5);
     // tweak the state button's onpointerup to change the current mode
-    playTimedButton.on('pointerup', function (e) { setGameState(gameState); currentMode = timedMode; });
+    playTimedButton.on('pointerup', function (e) { currentMode = timedMode; setGameState(gameState); });
     playTimedButton.on('pointerover', function (e) { e.target.alpha = 0.7; timedModeExplanationText.alpha = 1; endlessModeExplanationText.alpha = 0; });
     modeScene.addChild(playTimedButton);
-    modeScene.addChild(createText("Frantic & Fun", 156, 250, textStyle));
-    let playEndlessButton = createStateButton("ENDLESS", 400, 200, 1, buttonStyleLarge);
-    playEndlessButton.on('pointerup', function (e) { setGameState(gameState); currentMode = endlessMode; });
+    modeScene.addChild(createText("Frantic & Fun", 232, 250, textStyle, .5));
+    let playEndlessButton = createStateButton("ENDLESS", 500, 200, 1, buttonStyleLarge, .5);
+    playEndlessButton.on('pointerup', function (e) { currentMode = endlessMode; setGameState(gameState); });
     playEndlessButton.on('pointerover', function (e) { e.target.alpha = 0.7; timedModeExplanationText.alpha = 0; endlessModeExplanationText.alpha = 1; });
     modeScene.addChild(playEndlessButton);
-    modeScene.addChild(createText("Chill & Relaxed", 440, 250, textStyle));
+    modeScene.addChild(createText("Chill & Relaxed", 495, 250, textStyle, .5));
 
     //explanation of gamemodes:
-    let generalExplanationText = "\n  - Breaking long paths of hexes combos up points and grants higher scores.\n  - Complete challenges to earn even more points (see right)!";
+    let generalExplanationText = "\n  - Breaking long paths of hexes combos up points and grants higher scores.\n  - Complete challenges to earn even more points (see right for examples)!";
     timedModeExplanationText = createText("Timed: The clock is ticking! Break hexes and complete challenges to earn points and time. Large combos give even more time. When the clock runs out, its game over!\n" + generalExplanationText, 129, 380, textStyle);
     modeScene.addChild(timedModeExplanationText);
-    endlessModeExplanationText = createText("Endless: Go for as long as you want. Great for practicing and plenty relaxing.\n\n" + generalExplanationText, 129, 380, textStyle);
+    endlessModeExplanationText = createText("Endless: Go for as long as you want. Great for practicing and plenty relaxing.\n" + generalExplanationText, 129, 380, textStyle);
     modeScene.addChild(endlessModeExplanationText);
     endlessModeExplanationText.alpha = 0;
 
     let backButton = createStateButton("Back", 129, 510, howToPlayState, buttonStyleMedium);
     modeScene.addChild(backButton);
-    
-    modeScene.addChild(createText("Challenges:", 810, 272, textStyle4));
-    modeScene.addChild(createText("Triad", 766, 340, textStyle3));
-    modeScene.addChild(createText("Draw a:", 766, 370, textStyle4));
-    modeScene.addChild(createText("Triangle", 766, 400, textStyle4));
+
+
+    let challengeText = createText("Challenges:", 861, 275, textStyle4);
+    challengeText.anchor.x = .5;
+    challengeText.anchor.y = .5;
+    modeScene.addChild(challengeText);
+    let text = createText("Triangle", 792, 335, textStyle4);
+    text.anchor.x = .5;
+    let nameText = createText("Triad", 792, 312, textStyle3);
+    nameText.anchor.x = .55;
+    modeScene.addChild(nameText);
+    modeScene.addChild(text);
+
+    let rewardText = createText(challengeRewards[0], 792, 508, textStyle2);
+    rewardText.anchor.x = .5;
+    modeScene.addChild(rewardText);
+    modeScene.addChild(createSprite('media/challenge-0.png', 0.5, 0.5, 792, 420));
+
+    let challengeText2 = createText("Challenges:", 861, 275, textStyle4);
+    challengeText2.anchor.x = .5;
+    challengeText2.anchor.y = .5;
+    modeScene.addChild(challengeText2);
+    let text2 = createText("Lightning", 931, 335, textStyle4);
+    text2.anchor.x = .5;
+    let nameText2 = createText("Smite", 931, 312, textStyle3);
+    nameText2.anchor.x = .55;
+    modeScene.addChild(nameText2);
+    modeScene.addChild(text2);
+
+    let rewardText2 = createText(challengeRewards[3], 931, 508, textStyle2);
+    rewardText2.anchor.x = .5;
+    modeScene.addChild(rewardText2);
+    modeScene.addChild(createSprite('media/challenge-3.png', 0.5, 0.5, 931, 420));
 
 
     app.stage.addChild(modeScene);
@@ -546,54 +633,11 @@ function setUpGame() {
     // Adding a stage background
     gameScene.addChild(createSprite('media/background-panel.png', 0.5, 0.5, 512, 288));
 
-    for(let i = 0; i < challengeShapes.length; i++){
-        challengeSprites.push(createSprite('media/challenge-'+ i +'.png', 0.5, 0.5, 795, 435));
-        challengeSprites[i].alpha = 0;
-        gameScene.addChild(challengeSprites[i]);
-    }
-    challengeSprites[0].alpha = 1;
 
     // for falling
     for (let i = 0; i < hexGridWidth / 2; i++) {
         columnWaitAmount.push(0);
     }
-    // hexRefractionMaskContainer = new PIXI.Container();
-    // //set up masks for refraction effect
-    // for (let i = 0; i < hexArray.length; i++) {
-    //     let hexMaskGraphic = new PIXI.Sprite(hexMaskTexture);
-    //     hexMaskGraphic.anchor.x = .5;
-    //     hexMaskGraphic.anchor.y = .5;
-    //     hexMaskGraphic.scale.x = .5;
-    //     hexMaskGraphic.scale.y = .5;
-    //     gameScene.addChild(hexMaskGraphic);
-    //     hexRefractionMaskContainer.addChild(hexMaskGraphic);
-    //     hexRefractionMasks.push(hexMaskGraphic);
-    // }
-    // hexRefractionMaskSprite = new PIXI.Sprite(app.renderer.generateTexture(hexRefractionMaskContainer));
-
-    // maskedHexRefractionGraphic = new PIXI.Sprite();
-
-    // let hexRefractionScaleFactor = .5;
-    // hexRefractionGraphic = new PIXI.TilingSprite(hexRefractionSprite, 1024 / hexRefractionScaleFactor, 576 / hexRefractionScaleFactor);
-    // hexRefractionGraphic.scale.x = hexRefractionScaleFactor;
-    // hexRefractionGraphic.scale.y = hexRefractionScaleFactor;
-    // hexRefractionGraphic.alpha = .15;
-    // hexRefractionGraphic.blendMode = PIXI.BLEND_MODES.NORMAL;
-    // gameScene.addChild(hexRefractionGraphic);
-    // gameScene.addChild(maskedHexRefractionGraphic);
-    //set up graphics for refractions/holographic look
-    // for (let i = 0; i < hexArray.length; i++) {
-    //     let hexRefractionGraphic = new PIXI.TilingSprite(hexRefractionSprite, 100, 100);
-    //     hexRefractionGraphic.anchor.x = .5;
-    //     hexRefractionGraphic.anchor.y = .5;
-    //     hexRefractionGraphic.scale.x = hexRefractionScaleFactor;
-    //     hexRefractionGraphic.scale.y = hexRefractionScaleFactor;
-    //     hexRefractionGraphic.alpha = .15;
-    //     hexRefractionGraphic.blendMode = PIXI.BLEND_MODES.NORMAL;
-    //     gameScene.addChild(hexRefractionGraphic);
-    //     hexRefractionGraphics.push(hexRefractionGraphic);
-    //     hexRefractionGraphic.mask = hexRefractionMasks[i];
-    // }
 
     wrongMoveIndicator = new WrongMoveIndicator();
     let wmi_proxy = wrongMoveIndicator;
@@ -603,17 +647,54 @@ function setUpGame() {
     gameScene.addChild(timeTracker);
     gameScene.addChild(scoreTracker);
 
-    gameControlTextValues = [createText('3', 325, 275, countdownStyle), 
-    createText('2', 325, 275, countdownStyle), 
-    createText('1', 325, 275, countdownStyle), 
-    createText('MATCH!', 125, 275, countdownStyle), 
-    createText('TIME!', 200, 275, countdownStyle)];
+    gameControlTextValues = [createText('3', 374, 275, countdownStyle, .5),
+    createText('2', 374, 275, countdownStyle, .5),
+    createText('1', 374, 275, countdownStyle, .5),
+    createText('MATCH!', 374, 275, countdownStyle, .5),
+    createText('TIME!', 374, 275, countdownStyle, .5)];
 
     for (let textItem of gameControlTextValues) {
         gameScene.addChild(textItem);
         textItem.visible = false;
     }
     gameControlTextValues[0].visible = true;
+
+
+    //challenges HUD
+    let challengeText = createText("Challenges:", 861, 275, textStyle4);
+    challengeText.anchor.x = .5;
+    challengeText.anchor.y = .5;
+    gameScene.addChild(challengeText);
+
+    challengeTitle1 = createText("Triad", 792, 312, textStyle3);
+    challengeTitle1.anchor.x = .55;
+    gameScene.addChild(challengeTitle1);
+
+    challengeDescription1 = createText("Triangle", 792, 335, textStyle4);
+    challengeDescription1.anchor.x = .5;
+    gameScene.addChild(challengeDescription1);
+
+    challengeReward1 = createText(challengeRewards[0], 792, 508, textStyle2);
+    challengeReward1.anchor.x = .5;
+    gameScene.addChild(challengeReward1);
+
+    challengeTitle2 = createText("Triad", 931, 312, textStyle3);
+    challengeTitle2.anchor.x = .55;
+    gameScene.addChild(challengeTitle2);
+
+    challengeDescription2 = createText("Triangle", 931, 335, textStyle4);
+    challengeDescription2.anchor.x = .5;
+    gameScene.addChild(challengeDescription2);
+
+    challengeReward2 = createText(challengeRewards[0], 931, 508, textStyle2);
+    challengeReward2.anchor.x = .5;
+    gameScene.addChild(challengeReward2);
+
+    for (let i = 0; i < challengeShapes.length; i++) {
+        challengeSprites.push(createSprite('media/challenge-' + i + '.png', 0.5, 0.5, 792, 420));
+        challengeSprites[i].visible = false;
+        gameScene.addChild(challengeSprites[i]);
+    }
 
     // events for drag end
     // app.stage.on('pointerup', onDragEnd);
@@ -637,14 +718,15 @@ function setUpPause() {
     pauseScene.addChild(logo);
 
     // Creating the buttons
-    let gameStateButton = createStateButton("Back to Game", 129, 200, gameState, buttonStyleLarge);
+    let gameStateButton = createStateButton("Resume", 374, 224, gameState, buttonStyleLarge, .5);
     pauseScene.addChild(gameStateButton);
-    let modeButton = createStateButton("Quit to Mode Select", 129, 260, modeState, buttonStyleLarge);
+    let endGameButton = createStateButton("End Game", 374, 294, endGameState, buttonStyleLarge, .5);
+    pauseScene.addChild(endGameButton);
+    let modeButton = createStateButton("Quit to Menu", 374, 364, modeState, buttonStyleLarge, .5);
     pauseScene.addChild(modeButton);
     // let backButton = createStateButton("Quit to Menu", 75, 300, titleState, buttonStyleLarge);
     // pauseScene.addChild(backButton);
-    let endGameButton = createStateButton("End Game", 129, 320, endGameState, buttonStyleLarge);
-    pauseScene.addChild(endGameButton);
+
 
     app.stage.addChild(pauseScene);
 }
@@ -689,34 +771,63 @@ function setGameState(state) {
     //2 - game
     //3 - pause
     //4 - endgame
-    
+
     // Handle anything that needs to run while transitioning between states
     switch (state) {
         case gameState:
             isGameOver = false;
             if (currentState != pauseState) {
-                currentTimeInSec = startTimeInSec;
+                setHexInteractive(false);
+                hexFallAnimationTime = -1;
+                hexBreakAnimationTime = -1;
+                for (let textItem of gameControlTextValues) {
+                    textItem.visible = false;
+                }
+                gameControlTextValues[0].visible = true;
+                for (let i = 0; i < challengeShapes.length; i++) {
+                    challengeSprites[i].visible = false;
+                }
+                pickChallenge1();
+                pickChallenge2();
                 score = 0;
-                scoreTracker.text = 'score: ' + score;
+                scoreTracker.text = score;
+                countdownTimer = countdownTimeMax;
+                textValueIndex = 0;
                 isInCountdown = true;
                 recolorHexGrid();
+
+                timeTracker.style = whiteText;
+
+                if (currentMode == endlessMode) {
+                    timeTracker.x = 862;
+                    timeTracker.anchor.x = .5;
+                    currentTimeInSec = 0;
+                } else {
+                    timeTracker.x = 862;
+                    timeTracker.anchor.x = .5;
+                    currentTimeInSec = startTimeInSec;
+                }
+
+                if (timeAddIndicator != null) {
+                    gameScene.removeChild(timeAddIndicator);
+                    timeAddIndicator = null;
+                }
             }
-            currentTimeInSec = pausedTime;
             passChildren(gameState);
             backgroundRefractionGraphic.alpha = .02;
-            challengeComplete1;
-            challengeComplete2;
             gameStarted = true;
             break;
         case pauseState:
-            pausedTime = currentTimeInSec;
+            backgroundRefractionGraphic.alpha = .1;
             break;
         case modeState:
+            backgroundRefractionGraphic.alpha = .1;
+            isInCountdown = false;
             currentTimeInSec = startTimeInSec;
-            pausedTime = currentTimeInSec;
             recolorHexGrid();
             break;
         case howToPlayState:
+            isInCountdown = false;
             passChildren(howToPlayState);
             demoHexArray[0].setColorsAndRotation(3, 1, 2, 0);
             demoHexArray[1].setColorsAndRotation(2, 4, 1, 0);
@@ -726,10 +837,11 @@ function setGameState(state) {
             backgroundRefractionGraphic.alpha = 0;
             break;
         case endGameState:
-            
+
             break;
         default:
-            backgroundRefractionGraphic.alpha = .07;
+            isInCountdown = false;
+            backgroundRefractionGraphic.alpha = .1;
             break;
     }
 
@@ -763,28 +875,98 @@ function passChildren(targetState) {
     }
 }
 
-function pickChallenge1(){
+function pickChallenge1() {
     let previousChallenge = challengeIndex1;
-    challengeSprites[challengeIndex1].alpha = 0;
+    challengeSprites[challengeIndex1].visible = false;
     challengeIndex1 = Math.trunc(Math.random() * challengeShapes.length);
     //keep randomizing to make sure we dont get 2 of the same challenge
     while (challengeIndex1 == challengeIndex2 || previousChallenge == challengeIndex1) {
         challengeIndex1 = Math.trunc(Math.random() * challengeShapes.length);
     }
     challengeComplete1 = false;
-    challengeCompleteInPath1 = false;
+
+    challengeSprites[challengeIndex1].visible = true;
+    challengeSprites[challengeIndex1].x = 792;
+    challengeTitle1.text = challengeNames[challengeIndex1];
+    challengeDescription1.text = challengeShapes[challengeIndex1];
+    challengeReward1.text = challengeRewards[challengeIndex1];
 }
 
 function pickChallenge2() {
     let previousChallenge = challengeIndex2;
-    challengeSprites[challengeIndex1].alpha = 0;
+    challengeSprites[challengeIndex2].visible = false;
     challengeIndex2 = Math.trunc(Math.random() * challengeShapes.length);
     //keep randomizing to make sure we dont get 2 of the same challenge
-    while (challengeIndex2 == challengeIndex1 || previousChallenge == challengeIndex2){
+    while (challengeIndex2 == challengeIndex1 || previousChallenge == challengeIndex2) {
         challengeIndex2 = Math.trunc(Math.random() * challengeShapes.length);
     }
     challengeComplete2 = false;
-    challengeCompleteInPath2 = false;
+
+    challengeSprites[challengeIndex2].visible = true;
+    challengeSprites[challengeIndex2].x = 931;
+    challengeTitle2.text = challengeNames[challengeIndex2];
+    challengeDescription2.text = challengeShapes[challengeIndex2];
+    challengeReward2.text = challengeRewards[challengeIndex2];
+}
+
+function completeChallenge1() {
+    //reward points
+    setScore(score + challengeRewards[challengeIndex1]);
+
+    if (currentMode == timedMode) {
+        timeToAdd += challengeRewards[challengeIndex1] / 60;
+        timeAddIndicator.setAmount(timeToAdd);
+    }
+
+    let challengeIndicator = new ScoreIndicator(792, 350, challengeRewards[challengeIndex1], challengeCompleteIndicatorStyle);
+    gameScene.addChild(challengeIndicator);
+    scoreIndicators.push(challengeIndicator);
+
+    for (let i = 0; i < 3; i++) {
+        let particle = new HexBreakParticleSystem(792, 390 + 35 * i, 6, 7, 8);
+        hexBreakParticles.push(particle);
+        app.stage.addChild(particle);
+    }
+
+
+    pickChallenge1();
+}
+
+function setScore(newScore) {
+    score = newScore;
+    scoreTracker.text = score;
+}
+
+function setTime(newTime) {
+    currentTimeInSec = newTime;
+    //controlling time text HUD
+    if(currentTimeInSec > 10){
+        timeTracker.style = whiteText;
+    }
+
+    currentMode != endlessMode ? timeTracker.text = secondsToTimeString(currentTimeInSec) : timeTracker.text = secondsToTimeStringNoMilliSeconds(currentTimeInSec);
+}
+
+function completeChallenge2() {
+    //reward points
+    setScore(score + challengeRewards[challengeIndex2]);
+
+    if (currentMode == timedMode) {
+        timeToAdd += challengeRewards[challengeIndex2] / 20;
+        timeAddIndicator.setAmount(timeToAdd);
+    }
+
+    let challengeIndicator = new ScoreIndicator(931, 350, challengeRewards[challengeIndex2], challengeCompleteIndicatorStyle);
+    gameScene.addChild(challengeIndicator);
+    scoreIndicators.push(challengeIndicator);
+
+    for (let i = 0; i < 3; i++) {
+        let particle = new HexBreakParticleSystem(931, 390 + 35 * i, 6, 7, 8);
+        hexBreakParticles.push(particle);
+        app.stage.addChild(particle);
+    }
+
+    pickChallenge2();
 }
 
 // Helper function to rebuild the hex grid on demand
@@ -796,18 +978,18 @@ function recolorHexGrid() {
 
 // Creates and returns a button that calls setGameState
 // I have no idea why, but passing in a callback function refused to work and I am very upsetti about it :(
-function createStateButton(text, x, y, targetState, style = buttonStyleLarge) {
+function createStateButton(text, x, y, targetState, style = buttonStyleLarge, anchorX = 0, anchorY = .5) {
     //store the text and position values
     let button = new PIXI.Text(text);
     button.style = style;
     button.x = x;
     button.y = y;
-    button.anchor.set(0, .5);
+    button.anchor.set(anchorX, anchorY);
     //make it interactive
     button.interactive = true;
     button.buttonMode = true;
     //when the user clicks down, set our selected button to this one
-     button.on('pointerdown', function (e) { buttonSound.play(); });
+    button.on('pointerdown', function (e) { buttonSound.play(); });
     //when the user releases the click; if this is the same button their clicked down on, then call its function!
     button.on('pointerup', function (e) { setGameState(targetState); });
     //if the user hovers over the button, change alpha
@@ -817,13 +999,13 @@ function createStateButton(text, x, y, targetState, style = buttonStyleLarge) {
     return button;
 }
 
-function createText(text, x, y, style) {
+function createText(text, x, y, style, anchorX = 0, anchorY = .5) {
     //store the text and position values
     let textItem = new PIXI.Text(text);
     textItem.style = style;
     textItem.x = x;
     textItem.y = y;
-    textItem.anchor.set(0, .5);
+    textItem.anchor.set(anchorX, anchorY);
     return textItem;
 }
 
@@ -836,6 +1018,13 @@ function createSprite(url, anchorX, anchorY, posX, posY) {
     img.position.y = posY;
 
     return img;
+}
+
+function setHexInteractive(interactive) {
+    for (let i = 0; i < hexArray.length; i++) {
+        hexArray[i].ineractive = interactive;
+        hexArray[i].buttonMode = interactive;
+    }
 }
 
 
@@ -863,11 +1052,10 @@ function updateLoop() {
             } else {
                 textValueIndex = 0;
                 isInCountdown = false;
+                setHexInteractive(true);
             }
-            
-        }
-    } else {
 
+        }
     }
 
     // for (let i = 0; i < hexRefractionMasks.length; i++) {
@@ -943,6 +1131,27 @@ function updateLoop() {
         }
     }
 
+    //update all the Points Indicators
+    for (let i = 0; i < scoreIndicators.length; i++) {
+        scoreIndicators[i].update();
+
+        //remove "dead" ones
+        if (scoreIndicators[i].currentLifeTime <= 0) {
+            gameScene.removeChild(scoreIndicators[i]);
+            scoreIndicators.shift();
+            i--;
+        }
+    }
+
+    if (timeAddIndicator != null) {
+        timeAddIndicator.update();
+        if (timeAddIndicator.currentAnimationTime <= 0) {
+            gameScene.removeChild(timeAddIndicator);
+            timeAddIndicator = null;
+            setTime(currentTimeInSec + timeToAdd);
+        }
+    }
+
     //break the hexes sequentially, in order they are in the path
     if (hexBreakAnimationTime > 0) {
         countDown = false;
@@ -959,6 +1168,9 @@ function updateLoop() {
 
     //once we are done watching all the hexes break, begin making them fall to fill in the space
     if (hexBreakAnimationTime <= 0 && hexBreakAnimationTime != -1) {
+        if (currentMode == timedMode) {
+            timeAddIndicator.fadingAnimationPlaying = true;
+        }
         hexBreakAnimationTime = -1;
         hexBreakAnimationTimePerHex = -1;
         scanBoardForFallableHexes();
@@ -1043,6 +1255,7 @@ function updateLoop() {
             hexFallAnimationTime = hexFallAnimationTimeMax;
         }
         else {
+            setHexInteractive(true);
             hexFallAnimationTime = -1;
             for (let i = 0; i < hexGridWidth / 2; i++) {
                 columnWaitAmount[i] = 0;
@@ -1053,9 +1266,9 @@ function updateLoop() {
     }
 
     // change to only decrease on first click
-    if (currentState == gameState && gameStarted && currentMode != endlessMode && !isInCountdown) {
+    if (currentState == gameState && gameStarted && currentMode != endlessMode && !isInCountdown && hexFallAnimationTime == -1 && hexFallAnimationTime == -1) {
         prevTime = currentTimeInSec;
-        currentTimeInSec -= dt;
+        setTime(currentTimeInSec - frameTime);
 
         if(currentTimeInSec <= 10 && Math.ceil(currentTimeInSec) < Math.ceil(prevTime)){
             timerSound.play();
@@ -1071,11 +1284,12 @@ function updateLoop() {
             gameStarted = false;
         }
     }
+    else if (currentState == gameState && gameStarted && currentMode == endlessMode && !isInCountdown && hexFallAnimationTime == -1 && hexFallAnimationTime == -1) {
+        setTime(currentTimeInSec + frameTime);
+    }
 
     //controlling time text HUD
-    currentMode != endlessMode ? timeTracker.text = secondsToTimeString(currentTimeInSec) : timeTracker.text = ``;
-
-    timeTracker.text = secondsToTimeString(currentTimeInSec);
+    currentMode != endlessMode ? timeTracker.text = secondsToTimeString(currentTimeInSec) : timeTracker.text = secondsToTimeStringNoMilliSeconds(currentTimeInSec);
 
     //reset our controls for next frame
     keysReleased = [];
@@ -1104,13 +1318,23 @@ function findHexAtPos(x, y) {
 //has been spawned in from up above
 function breakHex(hex) {
     //update score and timer
-    score++;
-    plusScore.text = "+1";
-    scoreTracker.text = scoreString + score;
+    if (!isGameOver) {
+        comboCount += 1;
+        setScore(score + (comboCount * 10))
+        scoreTracker.text = score;
 
-    currentTimeInSec++;
+        let scoreIndicator = new ScoreIndicator(hex.x, hex.y, comboCount * 10, scoreIndicatorStyle);
+        gameScene.addChild(scoreIndicator);
+        scoreIndicators.push(scoreIndicator);
 
-    breakSound.play();
+        if (currentMode == timedMode) {
+            timeToAdd += Math.max(comboCount - 2, 0) / 3;
+            timeAddIndicator.setAmount(timeToAdd);
+        }
+
+        breakSound.play();
+    }
+
 
     //spawn a break hex particle
     let particle = new HexBreakParticleSystem(hex.x, hex.y, hex.colorIndices[0], hex.colorIndices[1], hex.colorIndices[2]);
@@ -1129,8 +1353,6 @@ function breakHex(hex) {
     hex.y = getScreenSpaceY(hex.posY);
     hex.falling = true;
     hex.randomizeColors();
-
-    addScoreAnimation(hex.x, hex.y);
 }
 
 
@@ -1145,6 +1367,19 @@ function onDragEnd(e) {
     //console.log("Drag End (for whole window)");
     let completePath = compareHexes(hexPath);
     if (completePath && currentState == gameState && !isInCountdown) {
+        if (currentMode == timedMode) {
+            timeToAdd = 0;
+            timeAddIndicator = new TimeAddIndicator(862, 61, scoreIndicatorStyle, .6);
+            gameScene.addChild(timeAddIndicator);
+        }
+
+        if (challengeComplete1) {
+            completeChallenge1();
+        }
+        if (challengeComplete2) {
+            completeChallenge2();
+        }
+
         //detectShape(hexPath);
         //start the hex breaking animation
         hexBreakAnimationTime = hexBreakAnimationTimeMax;
@@ -1160,6 +1395,11 @@ function onDragEnd(e) {
 
         hexBreakAnimationTimePerHex = 0;
         hexBreakAnimationTime += .1;
+
+        setHexInteractive(false);
+
+        comboCount = 0;
+
 
         pathIndicator.clear();
         pathIndicator2.clear();
@@ -1295,21 +1535,11 @@ function createBg(texture, scene) {
 }
 
 // flash timer text
-function flashText(){
-    if(timeTracker.style == whiteText){
+function flashText() {
+    if (timeTracker.style == whiteText) {
         timeTracker.style = redText;
     }
-    else{
+    else {
         timeTracker.style = whiteText;
-    }
-}
-
-function addScoreAnimation(posX, posY){
-    console.log("AA");
-    plusScore.x = posX;
-    plusScore.y = posY;
-    gameScene.addChild(plusScore);
-    for(let i = 10; i > 0; i--){
-        plusScore.y -= i;
     }
 }
