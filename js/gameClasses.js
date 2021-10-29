@@ -116,6 +116,7 @@ class Hexagon extends PIXI.Graphics {
             return;
 
         if (this.currentRotationVelocity == 0) {
+            rotateCWSound.play();
             rotationCoolDown = rotationCoolDownMax;
             this.wantedRotationValue -= 1;
             this.currentRotationVelocity = -this.absoluteRotationVelocity;
@@ -127,6 +128,7 @@ class Hexagon extends PIXI.Graphics {
             return;
 
         if (this.currentRotationVelocity == 0) {
+            rotateCCWSound.play();
             rotationCoolDown = rotationCoolDownMax;
             this.wantedRotationValue += 1;
             this.currentRotationVelocity = this.absoluteRotationVelocity;
@@ -399,6 +401,8 @@ class Hexagon extends PIXI.Graphics {
 
         if (hexFallAnimationTime > 0 || hexBreakAnimationTime > 0 || isInCountdown)
             return;
+
+        buttonHoverSound.play();
 
         //if we have dragged onto this hex
         if (dragStartHex != null && mouseHeldDown) {
@@ -800,13 +804,13 @@ class ScoreIndicator extends PIXI.Text {
         this.currentLifeTime = this.currentLifeTimeMax;
     }
 
-    update(){
+    update() {
         this.y -= 60 * frameTime;
         this.currentLifeTime -= frameTime;
-        if (this.currentLifeTime < this.startFadingTime && this.currentLifeTime > 0){
+        if (this.currentLifeTime < this.startFadingTime && this.currentLifeTime > 0) {
             this.alpha = this.currentLifeTime / this.startFadingTime;
         }
-        else if (this.currentLifeTimeMax <= 0){
+        else if (this.currentLifeTimeMax <= 0) {
             this.alpha = 0;
         }
     }
@@ -840,13 +844,13 @@ class TimeAddIndicator extends PIXI.Text {
         this.text = "+" + secondsToTimeStringShortened(this.amountOfTime);
     }
 
-    addToAmount(amountToAdd){
+    addToAmount(amountToAdd) {
         this.amountOfTime += amountToAdd;
         this.text = "+" + secondsToTimeStringShortened(this.amountOfTime);
     }
 
     update() {
-        if(this.fadingAnimationPlaying){
+        if (this.fadingAnimationPlaying) {
             this.currentAnimationTime -= frameTime;
             this.y = lerp(this.startingY, 119, (this.currentAnimationTimeMax - this.currentAnimationTime) / this.currentAnimationTimeMax);
             this.alpha = this.currentAnimationTime / this.currentAnimationTimeMax;

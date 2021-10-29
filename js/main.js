@@ -30,6 +30,14 @@ let scenes = [];
 let buttonSound = new Howl({
     src: ['media/buttonClick.mp3']
 });
+let buttonHoverSound = new Howl({
+    src: ['media/button-hover.mp3'],
+    volume: .25
+});
+let challengeCompleteSound = new Howl({
+    src: ['media/challenge-complete.mp3'],
+    volume: .5
+});
 let startTickSound = new Howl({
     src: ['media/startTick.wav']
 });
@@ -41,6 +49,20 @@ let timerSound = new Howl({
 });
 let breakSound = new Howl({
     src: ['media/break.mp3']
+});
+let hexPathInvalidSound = new Howl({
+    src: ['media/hex-path-invalid.mp3']
+});
+let tutorialHintSound = new Howl({
+    src: ['media/tutorial-hint.mp3']
+});
+let rotateCWSound = new Howl({
+    src: ['media/rotate-CW.mp3'],
+    volume: .35
+});
+let rotateCCWSound = new Howl({
+    src: ['media/rotate-CCW.mp3'],
+    volume: .35
 });
 let endSound = new Howl({
     src: ['media/endSound.wav']
@@ -340,6 +362,7 @@ app.loader.load();
 
 // Initializing the game's scenes- This should always be the first setup function called
 function setupScenes() {
+    Howler.volume(.5);
     //set up our scenes/containers
     stage = app.stage;
 
@@ -450,19 +473,14 @@ function setUpTitle() {
     // let howToPlayButton = createStateButton("How To Play", 75, 240, 1, buttonStyle);
     // titleScene.addChild(howToPlayButton);
 
-    // titleScene.addChild(new Hexagon(getScreenSpaceX(3), getScreenSpaceY(3), 3, 3, hexRadius, Math.trunc(Math.random() * 6), null, null));
-    // titleScene.addChild(new Hexagon(getScreenSpaceX(5), getScreenSpaceY(3), 5, 3, hexRadius, Math.trunc(Math.random() * 6), null, null));
-    // titleScene.addChild(new Hexagon(getScreenSpaceX(7), getScreenSpaceY(3), 5, 3, hexRadius, Math.trunc(Math.random() * 6), null, null));
-    // titleScene.addChild(new Hexagon(getScreenSpaceX(4), getScreenSpaceY(4), 3, 3, hexRadius, Math.trunc(Math.random() * 6), null, null));
-    // titleScene.addChild(new Hexagon(getScreenSpaceX(6), getScreenSpaceY(4), 5, 3, hexRadius, Math.trunc(Math.random() * 6), null, null));
-
     app.stage.addChild(titleScene);
 
 }
 
 //Plays a little rainbow effect when the Play button is clicked on the title screen
 function playButtonClick() {
-    buttonSound.play();
+    breakSound.play();
+    challengeCompleteSound.play();
 
     for (let i = 0; i < 6; i++) {
         let particle = new HexBreakParticleSystem(160 + i * 80, 330, i, i, i);
@@ -918,6 +936,7 @@ function pickChallenge2() {
 }
 
 function completeChallenge1() {
+    challengeCompleteSound.play();
     //reward points
     setScore(score + challengeRewards[challengeIndex1]);
 
@@ -956,6 +975,7 @@ function setTime(newTime) {
 }
 
 function completeChallenge2() {
+    challengeCompleteSound.play();
     //reward points
     setScore(score + challengeRewards[challengeIndex2]);
 
@@ -1001,7 +1021,7 @@ function createStateButton(text, x, y, targetState, style = buttonStyleLarge, an
     //when the user releases the click; if this is the same button their clicked down on, then call its function!
     button.on('pointerup', function (e) { setGameState(targetState); });
     //if the user hovers over the button, change alpha
-    button.on('pointerover', function (e) { e.target.alpha = 0.7; });
+    button.on('pointerover', function (e) { e.target.alpha = 0.7; buttonHoverSound.play(); });
     //if the user unhovers this button, return alpha back to normal
     button.on('pointerout', e => e.currentTarget.alpha = 1.0);
     return button;
@@ -1346,6 +1366,7 @@ function breakHex(hex) {
             timeAddIndicator.setAmount(timeToAdd);
         }
 
+        breakSound.rate(1 + (comboCount - 1)/30);
         breakSound.play();
     }
 
@@ -1424,6 +1445,8 @@ function onDragEnd(e) {
             hexBreakParticles.push(particle);
             app.stage.addChild(particle);
         }
+        breakSound.play();
+        challengeCompleteSound.play();
         setGameState(modeState);
         pathIndicator.clear();
         pathIndicator2.clear();
@@ -1433,6 +1456,7 @@ function onDragEnd(e) {
         howToPlayTextPopup2.alpha = 1;
         pathIndicator.clear();
         pathIndicator2.clear();
+        tutorialHintSound.play();
     } else {
         //if the path is wrong in any way
         if (hexPath.length > 1) {
@@ -1440,6 +1464,7 @@ function onDragEnd(e) {
             wrongMoveIndicator.y = getScreenSpaceY(wrongMovePositionAndDirection.posY + (wrongMovePositionAndDirection.directionY / 2));
             wrongMoveIndicator.currentBlinkAmount = 0;
             wrongMoveIndicator.currentBlinkTime = wrongMoveIndicator.currentBlinkTimeMax;
+            hexPathInvalidSound.play();
         }
         hexPath = [];
     }
