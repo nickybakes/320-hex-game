@@ -31,11 +31,20 @@ let scenes = [];
 let buttonSound = new Howl({
     src: ['media/buttonClick.mp3']
 });
+let startTickSound = new Howl({
+    src: ['media/startTick.wav']
+});
+let startSound = new Howl({
+    src: ['media/startSound.wav']
+});
 let timerSound = new Howl({
     src: ['media/timerTick.mp3']
 });
 let breakSound = new Howl({
     src: ['media/break.mp3']
+});
+let endSound = new Howl({
+    src: ['media/endSound.wav']
 });
 
 // As close to an enum as we're gonna get with no TypeScript :(
@@ -599,7 +608,6 @@ function setUpGame() {
     let wmi_proxy = wrongMoveIndicator;
     gameScene.addChild(wmi_proxy);
 
-
     gameScene.addChild(timeTracker);
     gameScene.addChild(scoreTracker);
 
@@ -850,6 +858,12 @@ function updateLoop() {
     mousePosition = app.renderer.plugins.interaction.mouse.global;
 
     if (isInCountdown && currentState == gameState) {
+        if(countdownTimer == 1 && textValueIndex < 3){
+            startTickSound.play();
+        }
+        else if(countdownTimer == 1 && textValueIndex == 3){
+            startSound.play();
+        }
         if (countdownTimer > 0) {
             countdownTimer -= dt;
             gameControlTextValues[textValueIndex].alpha = Math.sin(rad(180 * (countdownTimer / 2)));
@@ -858,7 +872,7 @@ function updateLoop() {
             countdownTimer = 1;
             gameControlTextValues[textValueIndex].visible = false;
             if (textValueIndex < 3) {
-                textValueIndex++;
+                textValueIndex++;           
                 gameControlTextValues[textValueIndex].visible = true;
             } else {
                 textValueIndex = 0;
@@ -866,8 +880,6 @@ function updateLoop() {
             }
             
         }
-    } else {
-
     }
 
     // for (let i = 0; i < hexRefractionMasks.length; i++) {
@@ -1068,6 +1080,7 @@ function updateLoop() {
             // Change this if needed
             currentTimeInSec = -0.1;
             setGameState(endGameState);
+            endSound.play();
             gameStarted = false;
         }
     }
