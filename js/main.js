@@ -36,7 +36,7 @@ let buttonHoverSound = new Howl({
 });
 let challengeCompleteSound = new Howl({
     src: ['media/challenge-complete.mp3'],
-    volume: .5
+    volume: .34
 });
 let startTickSound = new Howl({
     src: ['media/startTick.wav']
@@ -45,10 +45,19 @@ let startSound = new Howl({
     src: ['media/startSound.wav']
 });
 let timerSound = new Howl({
-    src: ['media/timerTick.mp3']
+    src: ['media/timerTick.mp3'],
+    volume: 1.2
 });
 let breakSound = new Howl({
     src: ['media/break.mp3']
+});
+let breakSoundQuiet = new Howl({
+    src: ['media/break.mp3'],
+    volume: .2
+});
+let comboSound = new Howl({
+    src: ['media/startSound.wav'],
+    volume: .5
 });
 let hexPathInvalidSound = new Howl({
     src: ['media/hex-path-invalid.mp3']
@@ -93,7 +102,6 @@ const carColorKey = prefix + "carColor";
 //variables needed to run the game
 let hexRadius = 50;
 let hexArray = [];
-let destroyedHexArray = [];
 let hexGridHeight = 6;
 let hexGridWidth = 6 * 2;
 let hexPath = [];
@@ -125,6 +133,16 @@ let hexGridDisplayY = 100;
 
 let rotationCoolDown;
 let rotationCoolDownMax = .2;
+
+let soundMuteText;
+let howlerVolumeDefault = .3;
+
+const soundMuteTextStyle = new PIXI.TextStyle({
+    fill: 0xDCDFE2,
+    fontFamily: "PT Serif",
+    fontSize: 20,
+    padding: 5
+});
 
 // timer variables
 const whiteText = new PIXI.TextStyle({
@@ -253,13 +271,18 @@ const buttonStyleLarge = new PIXI.TextStyle({
     strokeThickness: 8,
 });
 const finalScoreStyle = new PIXI.TextStyle({
-    fill: 0xc7c7c7,
-    fontSize: 150,
-    fontFamily: 'PT Serif',
+    fill: 0xffde85,
+    fontSize: 100,
+    fontFamily: "PT Serif",
+    stroke: true,
     dropShadow: true,
     dropShadowAlpha: 1,
     dropShadowBlur: 5,
-    dropShadowDistance: 1
+    dropShadowDistance: 1,
+    fontWeight: 'bolder',
+    align: 'center',
+    stroke: 0x00000,
+    strokeThickness: 8
 });
 const buttonStyleMedium = new PIXI.TextStyle({
     fill: 0xc7c7c7,
@@ -319,6 +342,21 @@ const countdownStyle = new PIXI.TextStyle({
     strokeThickness: 8
 });
 
+const countdownStyle2 = new PIXI.TextStyle({
+    fill: 0xffde85,
+    fontSize: 140,
+    fontFamily: "PT Serif",
+    stroke: true,
+    dropShadow: true,
+    dropShadowAlpha: 1,
+    dropShadowBlur: 5,
+    dropShadowDistance: 1,
+    fontWeight: 'bolder',
+    align: 'center',
+    stroke: 0x00000,
+    strokeThickness: 8
+});
+
 const scoreIndicatorStyle = new PIXI.TextStyle({
     fill: 0xffde85,
     fontSize: 45,
@@ -362,7 +400,7 @@ app.loader.load();
 
 // Initializing the game's scenes- This should always be the first setup function called
 function setupScenes() {
-    Howler.volume(.5);
+    Howler.volume(howlerVolumeDefault);
     //set up our scenes/containers
     stage = app.stage;
 
@@ -430,6 +468,9 @@ function setupScenes() {
     setUpPause();
     setUpEnd();
     scenes = [titleScene, howToPlayScene, modeScene, gameScene, pauseScene, endGameScene];
+
+    soundMuteText = createText("Mute sound", 1006, 44, soundMuteTextStyle, 1);
+    app.stage.addChild(soundMuteText);
 
     //our game state starts at 0 (title screen)
     setGameState(0);
@@ -521,7 +562,7 @@ function setupHowToPlay() {
     // Adding a stage background
     howToPlayScene.addChild(createSprite('media/background-panel-menu.png', 0.5, 0.5, 512, 288));
 
-    howToPlayScene.addChild(createText("You are a wizard building a spell from multiple magical elements. Combine them by drawing lines between sections that share a color or icon. You can rotate hexes with Q and E, and match multiple colors in one path!", 134, 212, textStyle));
+    howToPlayScene.addChild(createText("You are a mage building a spell from multiple magical elements. Combine them by drawing lines between sections that share a color or icon. You can rotate hexes with Q and E, and match multiple colors in one path!", 134, 212, textStyle));
     //"Try to get ALL THREE in one go!";
     //The colors only need to match between 2 adjacent segments.
     howToPlayTextPopup1 = createText("Try to get ALL THREE in one go!", 374, 410, textStyle2, .5);
@@ -677,7 +718,7 @@ function setUpGame() {
     createText('2', 374, 275, countdownStyle, .5),
     createText('1', 374, 275, countdownStyle, .5),
     createText('MATCH!', 374, 275, countdownStyle, .5),
-    createText('TIME!', 374, 275, countdownStyle, .5)];
+    createText('GAME\nOVER!', 374, 275, countdownStyle, .5)];
 
     for (let textItem of gameControlTextValues) {
         gameScene.addChild(textItem);
@@ -746,7 +787,8 @@ function setUpPause() {
     // Creating the buttons
     let gameStateButton = createStateButton("Resume", 374, 224, gameState, buttonStyleLarge, .5);
     pauseScene.addChild(gameStateButton);
-    let endGameButton = createStateButton("End Game", 374, 294, endGameState, buttonStyleLarge, .5);
+    let endGameButton = createStateButton("End Game", 374, 294, gameState, buttonStyleLarge, .5);
+    endGameButton.on('pointerup', function (e) { forceEndGame(); });
     pauseScene.addChild(endGameButton);
     let modeButton = createStateButton("Quit to Menu", 374, 364, modeState, buttonStyleLarge, .5);
     pauseScene.addChild(modeButton);
@@ -773,13 +815,15 @@ function setUpEnd() {
     // howToPlayScene.addChild(createText("High Score: ", 75, 170, textStyle));
 
     // Creating the buttons
-    let backToMenuButton = createStateButton("Return to Menu", 170, 480, modeState, buttonStyleLarge);
+    let replayButton = createStateButton("Play Again", 374, 410, gameState, buttonStyleLarge, .5);
+    endGameScene.addChild(replayButton);
+    let backToMenuButton = createStateButton("Quit to Menu", 374, 480, modeState, buttonStyleLarge, .5);
     endGameScene.addChild(backToMenuButton);
 
-    let scoreText = createText(`Final Score:`, 215, 240, buttonStyleLarge);
+
+    let scoreText = createText(`Final Score:`, 374, 215, buttonStyleLarge, .5);
     // 40px left per digit
-    scoreNumber = createText(`${score}`, 360, 350, finalScoreStyle);
-    scoreNumber.anchor.x = 0.5;
+    scoreNumber = createText(" ", 374, 310, finalScoreStyle, .5);
     endGameScene.addChild(scoreText);
     endGameScene.addChild(scoreNumber);
 
@@ -801,22 +845,23 @@ function setGameState(state) {
     // Handle anything that needs to run while transitioning between states
     switch (state) {
         case gameState:
-            isGameOver = false;
             if (currentState != pauseState) {
-                setHexInteractive(false);
+                isGameOver = false;
                 hexFallAnimationTime = -1;
                 hexBreakAnimationTime = -1;
                 for (let textItem of gameControlTextValues) {
                     textItem.visible = false;
                 }
+                gameControlTextValues[4].visible = false;
                 gameControlTextValues[0].visible = true;
                 for (let i = 0; i < challengeShapes.length; i++) {
                     challengeSprites[i].visible = false;
                 }
                 pickChallenge1();
                 pickChallenge2();
-                score = 0;
-                scoreTracker.text = score;
+                if(!isGameOver){
+                    setScore(0);
+                }
                 countdownTimer = countdownTimeMax;
                 textValueIndex = 0;
                 isInCountdown = true;
@@ -827,21 +872,39 @@ function setGameState(state) {
                 if (currentMode == endlessMode) {
                     timeTracker.x = 862;
                     timeTracker.anchor.x = .5;
-                    currentTimeInSec = 0;
+                    setTime(0);
                 } else {
                     timeTracker.x = 862;
                     timeTracker.anchor.x = .5;
-                    currentTimeInSec = startTimeInSec;
+                    setTime(startTimeInSec);
                 }
 
                 if (timeAddIndicator != null) {
                     gameScene.removeChild(timeAddIndicator);
                     timeAddIndicator = null;
                 }
+
+
+                for (let i = 0; i < columnWaitAmount.length; i++) {
+                    columnWaitAmount[i] = 0;
+                }
+
+                //make sure all the hexes fall
+                while (scanBoardForFallableHexes()) {
+                    scanBoardForFallableHexes();
+                }
+
+                for (let i = 0; i < hexArray.length; i++) {
+                    hexArray[i].x = getScreenSpaceX(hexArray[i].posX);
+                    hexArray[i].y = getScreenSpaceY(hexArray[i].posY);
+                }
+
+                setHexInteractive(false);
             }
             passChildren(gameState);
             backgroundRefractionGraphic.alpha = .02;
-            gameStarted = true;
+            if (!isGameOver)
+                gameStarted = true;
             break;
         case pauseState:
             backgroundRefractionGraphic.alpha = .1;
@@ -861,9 +924,6 @@ function setGameState(state) {
             howToPlayTextPopup1.alpha = 0;
             howToPlayTextPopup2.alpha = 0;
             backgroundRefractionGraphic.alpha = 0;
-            break;
-        case endGameState:
-
             break;
         default:
             isInCountdown = false;
@@ -962,12 +1022,13 @@ function completeChallenge1() {
 function setScore(newScore) {
     score = newScore;
     scoreTracker.text = score;
+    scoreNumber.text = score;
 }
 
 function setTime(newTime) {
     currentTimeInSec = newTime;
     //controlling time text HUD
-    if(currentTimeInSec > 10){
+    if (currentTimeInSec > 10) {
         timeTracker.style = whiteText;
     }
 
@@ -993,7 +1054,6 @@ function completeChallenge2() {
         hexBreakParticles.push(particle);
         app.stage.addChild(particle);
     }
-
     pickChallenge2();
 }
 
@@ -1066,11 +1126,11 @@ function updateLoop() {
     //get our mouse position
     mousePosition = app.renderer.plugins.interaction.mouse.global;
 
-    if (isInCountdown && currentState == gameState) {
-        if(countdownTimer == 1 && textValueIndex < 3){
+    if (isInCountdown && currentState == gameState && !isGameOver) {
+        if (countdownTimer == 1 && textValueIndex < 3) {
             startTickSound.play();
         }
-        else if(countdownTimer == 1 && textValueIndex == 3){
+        else if (countdownTimer == 1 && textValueIndex == 3) {
             startSound.play();
         }
         if (countdownTimer > 0) {
@@ -1081,7 +1141,7 @@ function updateLoop() {
             countdownTimer = 1;
             gameControlTextValues[textValueIndex].visible = false;
             if (textValueIndex < 3) {
-                textValueIndex++;           
+                textValueIndex++;
                 gameControlTextValues[textValueIndex].visible = true;
             } else {
                 textValueIndex = 0;
@@ -1091,18 +1151,13 @@ function updateLoop() {
         }
     }
 
-    // for (let i = 0; i < hexRefractionMasks.length; i++) {
-    //     hexRefractionMasks[i].x = hexArray[i].x;
-    //     hexRefractionMasks[i].y = hexArray[i].y;
-    //     //hexRefractionGraphics[i].x = hexArray[i].x;
-    //     //hexRefractionGraphics[i].y = hexArray[i].y;
-    // }
-
-    // hexRefractionMaskSprite = new PIXI.Sprite(app.renderer.generateTexture(hexRefractionMaskContainer));
-
-    // hexRefractionGraphic.mask = hexRefractionMaskSprite;
-
-    //maskedHexRefractionGraphic = new PIXI.Sprite(app.renderer.generateTexture(hexRefractionGraphic));
+    if (!keysHeld["77"] && keysReleased["77"] && Howler.volume() == howlerVolumeDefault) {
+        soundMuteText.text = "Unmute sound";
+        Howler.volume(0);
+    } else if (!keysHeld["77"] && keysReleased["77"] && Howler.volume() == 0) {
+        soundMuteText.text = "Mute sound";
+        Howler.volume(howlerVolumeDefault);
+    }
 
     if (!keysHeld["73"] && keysReleased["73"]) {
         showHexIcons = !showHexIcons;
@@ -1201,12 +1256,19 @@ function updateLoop() {
 
     //once we are done watching all the hexes break, begin making them fall to fill in the space
     if (hexBreakAnimationTime <= 0 && hexBreakAnimationTime != -1) {
-        if (currentMode == timedMode) {
-            timeAddIndicator.fadingAnimationPlaying = true;
-        }
         hexBreakAnimationTime = -1;
         hexBreakAnimationTimePerHex = -1;
-        scanBoardForFallableHexes();
+
+        if (isGameOver) {
+            setGameState(endGameState);
+        }
+        else {
+            if (currentMode == timedMode) {
+                timeAddIndicator.fadingAnimationPlaying = true;
+            }
+            scanBoardForFallableHexes();
+        }
+
     }
 
     pathIndicator2.clear();
@@ -1217,7 +1279,7 @@ function updateLoop() {
 
 
     // You can hit esc to pause the game now
-    if (!keysHeld["27"] && keysReleased["27"] && currentState == gameState) {
+    if (!keysHeld["27"] && keysReleased["27"] && currentState == gameState && hexBreakAnimationTime == -1 && hexFallAnimationTime == -1) {
         setGameState(pauseState);
     } else if (!keysHeld["27"] && keysReleased["27"] && currentState == pauseState) {
         setGameState(gameState);
@@ -1239,15 +1301,6 @@ function updateLoop() {
     //     console.log("x: " + highlightedHex.posX + ", y: " + highlightedHex.posY);
     //     console.log(lerp(0, 255, highlightedHex.highlightOutlineBlinkValue));
     // }
-
-    //adds destroyed hexs to graveyard
-    for (let i = 0; i < destroyedHexArray.length; i++) {
-        for (let j = 0; j < hexArray.length; j++) {
-            if (destroyedHexArray[i] == hexArray[j]) {
-                hexArray[j] = new Hexagon();
-            }
-        }
-    }
 
     //update hex data
     for (let i = 0; i < hexArray.length; i++) {
@@ -1299,11 +1352,11 @@ function updateLoop() {
     }
 
     // change to only decrease on first click
-    if (currentState == gameState && gameStarted && currentMode != endlessMode && !isInCountdown && hexFallAnimationTime == -1 && hexFallAnimationTime == -1) {
+    if (currentState == gameState && gameStarted && currentMode != endlessMode && !isInCountdown && hexBreakAnimationTime == -1 && hexFallAnimationTime == -1) {
         prevTime = currentTimeInSec;
         setTime(currentTimeInSec - frameTime);
 
-        if(currentTimeInSec <= 10 && Math.ceil(currentTimeInSec) < Math.ceil(prevTime)){
+        if (currentTimeInSec <= 10 && Math.ceil(currentTimeInSec) < Math.ceil(prevTime)) {
             timerSound.play();
             flashText();
         }
@@ -1313,12 +1366,13 @@ function updateLoop() {
 
             // Change this if needed
             currentTimeInSec = -0.1;
-            setGameState(endGameState);
+            gameControlTextValues[4].visible = true;
+            breakAllHexes();
             endSound.play();
             gameStarted = false;
         }
     }
-    else if (currentState == gameState && gameStarted && currentMode == endlessMode && !isInCountdown && hexFallAnimationTime == -1 && hexFallAnimationTime == -1) {
+    else if (currentState == gameState && gameStarted && currentMode == endlessMode && !isInCountdown && hexBreakAnimationTime == -1 && hexFallAnimationTime == -1) {
         setTime(currentTimeInSec + frameTime);
     }
 
@@ -1327,6 +1381,33 @@ function updateLoop() {
 
     //reset our controls for next frame
     keysReleased = [];
+}
+
+function forceEndGame() {
+    if (currentMode == timedMode) {
+        isGameOver = true;
+
+        // Change this if needed
+        currentTimeInSec = -0.1;
+        isInCountdown = false;
+        for (let i = 0; i < gameControlTextValues.length; i++) {
+            gameControlTextValues[i].visible = false;
+        }
+        gameControlTextValues[4].visible = true;
+        breakAllHexes();
+        endSound.play();
+        gameStarted = false;
+    } else {
+        isGameOver = true;
+        isInCountdown = false;
+        for (let i = 0; i < gameControlTextValues.length; i++) {
+            gameControlTextValues[i].visible = false;
+        }
+        gameControlTextValues[4].visible = true;
+        breakAllHexes();
+        endSound.play();
+        gameStarted = false;
+    }
 }
 
 //finds a hexagon as a specific positon on the grid
@@ -1361,13 +1442,19 @@ function breakHex(hex) {
         gameScene.addChild(scoreIndicator);
         scoreIndicators.push(scoreIndicator);
 
-        if (currentMode == timedMode) {
+        if (currentMode == timedMode && timeAddIndicator != null) {
             timeToAdd += Math.max(comboCount - 2, 0) / 3;
             timeAddIndicator.setAmount(timeToAdd);
         }
 
-        breakSound.rate(1 + (comboCount - 1)/30);
+        if (hexPath.length + comboCount - 1 > 3) {
+            comboSound.rate(1 + (comboCount - 1) / 30);
+            comboSound.play();
+        }
         breakSound.play();
+    } else {
+        breakSoundQuiet.rate = .7 + (Math.random() - .5) * .5
+        breakSoundQuiet.play();
     }
 
 
