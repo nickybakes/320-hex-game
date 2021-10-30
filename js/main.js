@@ -1264,6 +1264,10 @@ function updateLoop() {
             setGameState(endGameState);
         }
         else {
+            for(let i = 0; i < hexPath.length; i++){
+                breakHex(hexPath[i]);
+            }
+            hexPath = [];
             if (currentMode == timedMode) {
                 timeAddIndicator.fadingAnimationPlaying = true;
             }
