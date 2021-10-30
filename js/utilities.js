@@ -84,6 +84,28 @@ function secondsToTimeStringNoMilliSeconds(seconds) {
     //return the result
     return timeString;
 }
+function secondsToTimeStringNoMilliSecondsHour(seconds) {
+    //clamp to 99 minutes and 59 seconds
+    seconds = clamp(seconds, 0, 215999.999);
+    //use javascript date to parse our seconds value as time
+    let date = new Date(null);
+    date.setSeconds(seconds, (seconds - parseInt(seconds)) * 1000);
+    //limit it to just the minutes, seconds, and milliseconds
+    let timeString = date.toISOString().substr(12, 7);
+    //return the result
+    return timeString;
+}
+function secondsToTimeStringNoMilliSecondsHour2(seconds) {
+    //clamp to 99 minutes and 59 seconds
+    seconds = clamp(seconds, 0, 215999.999);
+    //use javascript date to parse our seconds value as time
+    let date = new Date(null);
+    date.setSeconds(seconds, (seconds - parseInt(seconds)) * 1000);
+    //limit it to just the minutes, seconds, and milliseconds
+    let timeString = date.toISOString().substr(11, 8);
+    //return the result
+    return timeString;
+}
 
 function secondsToTimeStringShortened(seconds) {
     //clamp to 99 minutes and 59 seconds

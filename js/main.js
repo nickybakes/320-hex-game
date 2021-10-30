@@ -859,7 +859,7 @@ function setGameState(state) {
                 }
                 pickChallenge1();
                 pickChallenge2();
-                if(!isGameOver){
+                if (!isGameOver) {
                     setScore(0);
                 }
                 countdownTimer = countdownTimeMax;
@@ -1032,7 +1032,17 @@ function setTime(newTime) {
         timeTracker.style = whiteText;
     }
 
-    currentMode != endlessMode ? timeTracker.text = secondsToTimeString(currentTimeInSec) : timeTracker.text = secondsToTimeStringNoMilliSeconds(currentTimeInSec);
+    if (currentMode != endlessMode) {
+        timeTracker.text = secondsToTimeString(currentTimeInSec);
+    } else {
+        if (currentTimeInSec < 3600) {
+            timeTracker.text = secondsToTimeStringNoMilliSeconds(currentTimeInSec);
+        } else if (currentTimeInSec < 36000) {
+            timeTracker.text = secondsToTimeStringNoMilliSecondsHour(currentTimeInSec);
+        } else {
+            timeTracker.text = secondsToTimeStringNoMilliSecondsHour2(currentTimeInSec);
+        }
+    }
 }
 
 function completeChallenge2() {
@@ -1264,7 +1274,7 @@ function updateLoop() {
             setGameState(endGameState);
         }
         else {
-            for(let i = 0; i < hexPath.length; i++){
+            for (let i = 0; i < hexPath.length; i++) {
                 breakHex(hexPath[i]);
             }
             hexPath = [];
@@ -1380,9 +1390,6 @@ function updateLoop() {
     else if (currentState == gameState && gameStarted && currentMode == endlessMode && !isInCountdown && hexBreakAnimationTime == -1 && hexFallAnimationTime == -1) {
         setTime(currentTimeInSec + frameTime);
     }
-
-    //controlling time text HUD
-    currentMode != endlessMode ? timeTracker.text = secondsToTimeString(currentTimeInSec) : timeTracker.text = secondsToTimeStringNoMilliSeconds(currentTimeInSec);
 
     //reset our controls for next frame
     keysReleased = [];
