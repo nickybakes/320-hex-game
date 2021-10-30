@@ -135,7 +135,7 @@ let rotationCoolDown;
 let rotationCoolDownMax = .2;
 
 let soundMuteText;
-let howlerVolumeDefault = .3;
+let howlerVolumeDefault = .4;
 
 const soundMuteTextStyle = new PIXI.TextStyle({
     fill: 0xDCDFE2,
@@ -524,7 +524,7 @@ function playButtonClick() {
     challengeCompleteSound.play();
 
     for (let i = 0; i < 6; i++) {
-        let particle = new HexBreakParticleSystem(160 + i * 80, 330, i, i, i);
+        let particle = new HexBreakParticleSystem(374 + (i - 2.5) * 80, 330, i, i, i);
         hexBreakParticles.push(particle);
         app.stage.addChild(particle);
     }
