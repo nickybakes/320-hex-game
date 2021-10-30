@@ -1128,6 +1128,7 @@ function updateLoop() {
 
     if (isInCountdown && currentState == gameState && !isGameOver) {
         if (countdownTimer == 1 && textValueIndex < 3) {
+            setHexInteractive(false);
             startTickSound.play();
         }
         else if (countdownTimer == 1 && textValueIndex == 3) {
