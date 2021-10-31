@@ -846,6 +846,7 @@ function setGameState(state) {
     switch (state) {
         case gameState:
             if (currentState != pauseState) {
+                hexPath = [];
                 isGameOver = false;
                 hexFallAnimationTime = -1;
                 hexBreakAnimationTime = -1;
@@ -1270,14 +1271,15 @@ function updateLoop() {
         hexBreakAnimationTime = -1;
         hexBreakAnimationTimePerHex = -1;
 
+        for (let i = 0; i < hexPath.length; i++) {
+            breakHex(hexPath[i]);
+        }
+        hexPath = [];
+
         if (isGameOver) {
             setGameState(endGameState);
         }
         else {
-            for (let i = 0; i < hexPath.length; i++) {
-                breakHex(hexPath[i]);
-            }
-            hexPath = [];
             if (currentMode == timedMode) {
                 timeAddIndicator.fadingAnimationPlaying = true;
             }
