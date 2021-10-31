@@ -142,7 +142,6 @@ class Hexagon extends PIXI.Graphics {
         }
 
         if (this.falling && hexFallAnimationTime <= 0) {
-
             this.x = this.belowX;
             this.y = this.belowY;
             this.falling = false;

@@ -1358,6 +1358,11 @@ function updateLoop() {
             hexFallAnimationTime = hexFallAnimationTimeMax;
         }
         else {
+            for (let i = 0; i < hexArray.length; i++) {
+                hexArray[i].x = getScreenSpaceX(hexArray[i].posX);
+                hexArray[i].y = getScreenSpaceY(hexArray[i].posY);
+            }
+
             setHexInteractive(true);
             hexFallAnimationTime = -1;
             for (let i = 0; i < hexGridWidth / 2; i++) {
@@ -1379,6 +1384,7 @@ function updateLoop() {
         }
 
         if (currentTimeInSec <= 0) {
+            setHexInteractive(false);
             isGameOver = true;
 
             // Change this if needed
@@ -1399,6 +1405,7 @@ function updateLoop() {
 
 function forceEndGame() {
     if (currentMode == timedMode) {
+        setHexInteractive(false);
         isGameOver = true;
 
         // Change this if needed
@@ -1412,6 +1419,7 @@ function forceEndGame() {
         endSound.play();
         gameStarted = false;
     } else {
+        setHexInteractive(false);
         isGameOver = true;
         isInCountdown = false;
         for (let i = 0; i < gameControlTextValues.length; i++) {
